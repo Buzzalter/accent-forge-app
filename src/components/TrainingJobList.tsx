@@ -7,10 +7,13 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useTrainingJobs } from '@/contexts/TrainingJobContext';
 import { List, Clock, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { useLocation } from 'react-router-dom';
 
 export const TrainingJobList = () => {
   const [open, setOpen] = useState(false);
   const { jobs } = useTrainingJobs();
+  const location = useLocation();
+  const isTrainingPage = location.pathname === '/training';
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -45,11 +48,26 @@ export const TrainingJobList = () => {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-2 relative">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className={`gap-2 relative ${
+            isTrainingPage 
+              ? 'border-training-primary/30 text-training-primary hover:bg-training-primary/10 hover:border-training-primary' 
+              : 'border-primary/30 text-primary hover:bg-primary/10 hover:border-primary'
+          }`}
+        >
           <List className="h-4 w-4" />
           Training Jobs
           {jobs.length > 0 && (
-            <Badge variant="secondary" className="ml-1 h-5 min-w-5 text-xs">
+            <Badge 
+              variant="secondary" 
+              className={`ml-1 h-5 min-w-5 text-xs ${
+                isTrainingPage 
+                  ? 'bg-training-primary/10 text-training-primary border-training-primary/20' 
+                  : 'bg-primary/10 text-primary border-primary/20'
+              }`}
+            >
               {jobs.length}
             </Badge>
           )}
