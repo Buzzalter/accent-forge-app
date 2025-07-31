@@ -15,20 +15,17 @@ export const ProcessingSpinner = () => {
           </div>
         </div>
         
-        {/* Spinning Needle/Tonearm */}
-        <div className="absolute top-2 right-2 w-6 h-1 bg-gradient-to-r from-accent to-primary rounded-full animate-pulse origin-left transform rotate-45"></div>
-        
-        {/* Radiating Sound Waves */}
+        {/* Radiating Sound Waves - More Pronounced */}
         <div className="absolute inset-0 flex items-center justify-center">
           {[...Array(4)].map((_, i) => (
             <div
               key={i}
-              className="absolute border-2 border-accent/30 rounded-full animate-ping"
+              className="absolute border-4 border-accent/50 rounded-full animate-ping"
               style={{
-                width: `${32 + i * 16}px`,
-                height: `${32 + i * 16}px`,
-                animationDelay: `${i * 0.2}s`,
-                animationDuration: '2s',
+                width: `${40 + i * 20}px`,
+                height: `${40 + i * 20}px`,
+                animationDelay: `${i * 0.3}s`,
+                animationDuration: '1.5s',
               }}
             />
           ))}
