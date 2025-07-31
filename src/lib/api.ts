@@ -15,6 +15,26 @@ export interface TrainingJobResponse {
   // Add other response fields as needed
 }
 
+export interface SampleGenerationConfig {
+  task: string;
+  modelId?: string; // for completed training models
+  prompt: string;
+  voiceSettings?: {
+    speed?: number;
+    pitch?: number;
+    emotion?: string;
+  };
+}
+
+export interface SampleGenerationResponse {
+  uuid: string;
+  status: 'queued' | 'processing' | 'completed' | 'failed';
+  progress: number;
+  task: string;
+  audioUrl?: string; // available when completed
+  createdAt: string;
+}
+
 export interface TrainingJobStatus {
   uuid: string;
   status: 'queued' | 'training' | 'completed' | 'failed';
@@ -148,6 +168,87 @@ class TrainingAPI {
     return await response.json();
   }
 
+  // Generate audio sample
+  async generateSample(config: SampleGenerationConfig): Promise<SampleGenerationResponse> {
+    const response = await fetch(`${this.baseUrl}/samples/generate`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${this.apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        task: config.task,
+        modelId: config.modelId,
+        prompt: config.prompt,
+        voiceSettings: config.voiceSettings || {},
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to generate sample: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return {
+      uuid: data.uuid,
+      status: data.status || 'queued',
+      progress: data.progress || 0,
+      task: config.task,
+      audioUrl: data.audioUrl,
+      createdAt: data.createdAt || new Date().toISOString(),
+      ...data,
+    };
+  }
+
+  // Get sample generation status
+  async getSampleStatus(uuid: string): Promise<SampleGenerationResponse> {
+    const response = await fetch(`${this.baseUrl}/samples/status/${uuid}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${this.apiKey}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to get sample status: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return {
+      uuid: data.uuid,
+      status: data.status,
+      progress: data.progress || 0,
+      task: data.task,
+      audioUrl: data.audioUrl,
+      createdAt: data.createdAt || new Date().toISOString(),
+      ...data,
+    };
+  }
+
+  // Get general status (for any UUID - training or sample)
+  async getStatus(uuid: string): Promise<{ status: string; progress: number; type: 'training' | 'sample' }> {
+    const response = await fetch(`${this.baseUrl}/status/${uuid}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${this.apiKey}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to get status: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return {
+      status: data.status,
+      progress: data.progress || 0,
+      type: data.type || 'sample',
+      ...data,
+    };
+  }
+
   // Utility method to check if API is configured
   isConfigured(): boolean {
     return !!this.baseUrl && !!this.apiKey;
@@ -182,7 +283,7 @@ export const isTrainingAPIConfigured = () => {
   return trainingAPI.isConfigured();
 };
 
-// Example usage functions
+// Training job functions
 export const submitTrainingJob = async (
   task: string,
   referenceAudioFile: File,
@@ -201,4 +302,28 @@ export const checkJobStatus = async (uuid: string): Promise<TrainingJobStatus> =
 
 export const fetchAllJobs = async (): Promise<TrainingJobStatus[]> => {
   return await trainingAPI.getAllTrainingJobs();
+};
+
+// Sample generation functions
+export const generateAudioSample = async (
+  task: string,
+  prompt: string,
+  modelId?: string,
+  voiceSettings?: any
+): Promise<SampleGenerationResponse> => {
+  return await trainingAPI.generateSample({
+    task,
+    prompt,
+    modelId,
+    voiceSettings,
+  });
+};
+
+export const checkSampleStatus = async (uuid: string): Promise<SampleGenerationResponse> => {
+  return await trainingAPI.getSampleStatus(uuid);
+};
+
+// Universal status check for spinners
+export const checkStatus = async (uuid: string) => {
+  return await trainingAPI.getStatus(uuid);
 };

@@ -7,7 +7,7 @@ import { useTrainingJobs } from '@/contexts/TrainingJobContext';
 import { toast } from '@/hooks/use-toast';
 
 interface TrainModelDialogProps {
-  onTrainStart: (jobId: string) => void;
+  onTrainStart: (jobId: string) => Promise<void>;
 }
 
 export const TrainModelDialog = ({ onTrainStart }: TrainModelDialogProps) => {
@@ -15,7 +15,7 @@ export const TrainModelDialog = ({ onTrainStart }: TrainModelDialogProps) => {
   const [modelName, setModelName] = useState('');
   const { addJob } = useTrainingJobs();
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (!modelName.trim()) {
       toast({
         title: "Model name required",
@@ -25,16 +25,20 @@ export const TrainModelDialog = ({ onTrainStart }: TrainModelDialogProps) => {
       return;
     }
 
-    const jobId = addJob(modelName.trim());
-    onTrainStart(jobId);
-    
-    toast({
-      title: "Training started",
-      description: `Model "${modelName.trim()}" has been queued for training.`,
-    });
-    
-    setModelName('');
-    setOpen(false);
+    try {
+      const jobId = addJob(modelName.trim());
+      await onTrainStart(jobId);
+      
+      setModelName('');
+      setOpen(false);
+    } catch (error) {
+      console.error('Error starting training:', error);
+      toast({
+        title: "Training failed to start",
+        description: "There was an error starting the training job.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (

@@ -1,4 +1,46 @@
-export const ProcessingSpinner = () => {
+import { useEffect, useState } from "react";
+import { checkStatus } from "@/lib/api";
+
+interface ProcessingSpinnerProps {
+  uuid?: string | null;
+}
+
+export const ProcessingSpinner = ({ uuid }: ProcessingSpinnerProps) => {
+  const [progress, setProgress] = useState<number>(0);
+  const [statusText, setStatusText] = useState("Spinning up some AI magic...");
+
+  useEffect(() => {
+    if (!uuid) return;
+
+    const pollStatus = async () => {
+      try {
+        const status = await checkStatus(uuid);
+        setProgress(status.progress);
+        
+        // Update status text based on progress
+        if (status.progress < 25) {
+          setStatusText("Initializing audio processing...");
+        } else if (status.progress < 50) {
+          setStatusText("Analyzing audio patterns...");
+        } else if (status.progress < 75) {
+          setStatusText("Applying transformations...");
+        } else {
+          setStatusText("Finalizing output...");
+        }
+      } catch (error) {
+        console.error('Error checking status:', error);
+      }
+    };
+
+    // Poll status every 2 seconds
+    const interval = setInterval(pollStatus, 2000);
+    
+    // Initial check
+    pollStatus();
+
+    return () => clearInterval(interval);
+  }, [uuid]);
+
   return (
     <div className="flex flex-col items-center justify-center py-12 space-y-8">
       {/* Main Audio-Themed Spinner */}
@@ -36,8 +78,19 @@ export const ProcessingSpinner = () => {
       <div className="text-center space-y-2">
         <h3 className="text-lg font-semibold text-primary animate-pulse">🎵 Processing Audio</h3>
         <p className="text-sm text-muted-foreground">
-          Spinning up some AI magic...
+          {statusText}
         </p>
+        {uuid && progress > 0 && (
+          <div className="w-full max-w-xs mx-auto">
+            <div className="text-xs text-muted-foreground mb-1">{Math.round(progress)}% complete</div>
+            <div className="w-full bg-muted rounded-full h-2">
+              <div 
+                className="bg-primary h-2 rounded-full transition-all duration-300 ease-out"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

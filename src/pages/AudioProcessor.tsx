@@ -9,6 +9,7 @@ import { AudioPreview } from "@/components/AudioPreview";
 import { ProcessingSpinner } from "@/components/ProcessingSpinner";
 import { RotateCcw } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { generateAudioSample, checkSampleStatus, isTrainingAPIConfigured, setTrainingAPIConfig } from "@/lib/api";
 
 export interface AudioFile {
   file: File;
@@ -30,6 +31,7 @@ const AudioProcessor = () => {
   const [selectedAccent, setSelectedAccent] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [outputAudio, setOutputAudio] = useState<AudioFile | null>(null);
+  const [processingUuid, setProcessingUuid] = useState<string | null>(null);
 
   const handleAudioUpload = async (file: File) => {
     try {
@@ -63,42 +65,91 @@ const AudioProcessor = () => {
   const handleGenerate = async () => {
     if (!referenceAudio || !selectedAccent || !prompt.trim()) return;
 
+    if (!isTrainingAPIConfigured()) {
+      toast({
+        title: "API not configured",
+        description: "Please configure your API settings first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsProcessing(true);
     setOutputAudio(null);
+    setProcessingUuid(null);
 
     try {
-      // TODO: Replace with actual API call
-      const payload = {
-        audioUuid: referenceAudio.uuid,
-        prompt: prompt.trim(),
-        accent: selectedAccent,
-      };
+      // Start sample generation
+      const response = await generateAudioSample(
+        'accent_generation',
+        `${prompt} (Accent: ${selectedAccent})`,
+        undefined,
+        { accent: selectedAccent }
+      );
       
-      console.log("Generating audio with payload:", payload);
+      setProcessingUuid(response.uuid);
       
-      // Simulate processing time
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      // Poll for status updates
+      const pollInterval = setInterval(async () => {
+        try {
+          const status = await checkSampleStatus(response.uuid);
+          
+          if (status.status === 'completed' && status.audioUrl) {
+            // Create audio file from URL
+            const audioResponse = await fetch(status.audioUrl);
+            const audioBlob = await audioResponse.blob();
+            const audioFile = new File([audioBlob], 'generated-audio.wav', { type: 'audio/wav' });
+            
+            const outputAudioFile: AudioFile = {
+              file: audioFile,
+              uuid: status.uuid,
+              url: status.audioUrl,
+            };
+            
+            setOutputAudio(outputAudioFile);
+            setIsProcessing(false);
+            clearInterval(pollInterval);
+            
+            toast({
+              title: "Audio generated successfully",
+              description: "Your audio has been processed with the selected accent.",
+            });
+          } else if (status.status === 'failed') {
+            setIsProcessing(false);
+            clearInterval(pollInterval);
+            
+            toast({
+              title: "Generation failed",
+              description: "There was an error processing your audio.",
+              variant: "destructive",
+            });
+          }
+        } catch (error) {
+          console.error('Error checking status:', error);
+        }
+      }, 2000);
       
-      // Mock output audio (using same file for demo)
-      const outputAudioFile: AudioFile = {
-        file: referenceAudio.file,
-        uuid: `output-${Date.now()}`,
-        url: referenceAudio.url,
-      };
+      // Clean up interval after 5 minutes max
+      setTimeout(() => {
+        clearInterval(pollInterval);
+        if (isProcessing) {
+          setIsProcessing(false);
+          toast({
+            title: "Generation timeout",
+            description: "Audio generation took too long. Please try again.",
+            variant: "destructive",
+          });
+        }
+      }, 300000);
       
-      setOutputAudio(outputAudioFile);
-      toast({
-        title: "Audio generated successfully",
-        description: "Your audio has been processed with the selected accent.",
-      });
     } catch (error) {
+      console.error('Error generating audio:', error);
+      setIsProcessing(false);
       toast({
         title: "Generation failed",
         description: "There was an error processing your audio.",
         variant: "destructive",
       });
-    } finally {
-      setIsProcessing(false);
     }
   };
 
@@ -108,6 +159,7 @@ const AudioProcessor = () => {
     setSelectedAccent("");
     setOutputAudio(null);
     setIsProcessing(false);
+    setProcessingUuid(null);
     toast({
       title: "Cleared",
       description: "All inputs and outputs have been cleared.",
@@ -209,7 +261,7 @@ const AudioProcessor = () => {
             </CardHeader>
             <CardContent>
               {isProcessing ? (
-                <ProcessingSpinner />
+                <ProcessingSpinner uuid={processingUuid} />
               ) : outputAudio ? (
                 <AudioPreview audioFile={outputAudio} showRemove={false} />
               ) : (
