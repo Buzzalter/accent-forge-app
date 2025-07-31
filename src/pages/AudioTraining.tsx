@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 import { AudioUpload } from "@/components/AudioUpload";
+import { TrainingAudioUpload } from "@/components/TrainingAudioUpload";
 import { AudioPreview } from "@/components/AudioPreview";
 import { TrainingSpinner } from "@/components/TrainingSpinner";
 import { TrainModelDialog } from "@/components/TrainModelDialog";
@@ -147,9 +148,9 @@ const AudioTraining = () => {
             <CardContent className="space-y-6">
               {/* Audio Upload */}
               <div className="space-y-2">
-                <Label>Reference Audio</Label>
+                <Label className="text-training-primary">Reference Audio</Label>
                 {!referenceAudio ? (
-                  <AudioUpload onUpload={handleAudioUpload} />
+                  <TrainingAudioUpload onUpload={handleAudioUpload} />
                 ) : (
                   <AudioPreview 
                     audioFile={referenceAudio} 
@@ -160,12 +161,13 @@ const AudioTraining = () => {
 
               {/* Prompt Input */}
               <div className="space-y-2">
-                <Label htmlFor="prompt">Training Prompt</Label>
+                <Label htmlFor="prompt" className="text-training-primary">Training Prompt</Label>
                 <Input
                   id="prompt"
                   placeholder="Describe the voice characteristics you want to train..."
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
+                  className="border-training-primary/30 focus:border-training-primary focus:ring-training-primary"
                 />
               </div>
 
