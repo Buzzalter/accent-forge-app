@@ -32,23 +32,31 @@ export const AudioUpload = ({ onUpload }: AudioUploadProps) => {
     <div
       {...getRootProps()}
       className={cn(
-        "border-2 border-dashed border-border rounded-lg p-8 text-center cursor-pointer transition-all duration-200 hover:border-primary hover:bg-muted/50",
-        isDragActive && "border-primary bg-muted/50 scale-105"
+        "border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-all duration-300",
+        isDragActive 
+          ? "border-accent bg-accent/10 scale-105 shadow-lg" 
+          : "border-primary/30 bg-primary/5 hover:border-primary hover:bg-primary/10 hover:shadow-md"
       )}
     >
       <input {...getInputProps()} />
-      <div className="flex flex-col items-center gap-3">
+      <div className="flex flex-col items-center gap-4">
         {isDragActive ? (
-          <Upload className="h-12 w-12 text-primary animate-bounce" />
+          <div className="relative">
+            <Upload className="h-14 w-14 text-accent animate-bounce" />
+            <div className="absolute inset-0 h-14 w-14 rounded-full bg-accent/20 animate-ping" />
+          </div>
         ) : (
-          <Music className="h-12 w-12 text-muted-foreground" />
+          <div className="relative">
+            <Music className="h-14 w-14 text-primary" />
+            <div className="absolute -inset-2 rounded-full bg-gradient-to-r from-primary/20 to-accent/20 blur-sm" />
+          </div>
         )}
-        <div className="space-y-1">
-          <p className="text-sm font-medium">
+        <div className="space-y-2">
+          <p className="text-base font-medium text-primary">
             {isDragActive ? "Drop your audio file here" : "Click to upload or drag audio file"}
           </p>
-          <p className="text-xs text-muted-foreground">
-            Supports MP3, WAV, M4A, OGG, FLAC
+          <p className="text-sm text-muted-foreground">
+            Supports MP3, WAV, M4A, OGG, FLAC • Max 50MB
           </p>
         </div>
       </div>

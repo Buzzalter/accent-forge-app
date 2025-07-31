@@ -117,7 +117,7 @@ const AudioProcessor = () => {
   const isGenerateDisabled = !referenceAudio || !selectedAccent || !prompt.trim() || isProcessing;
 
   return (
-    <div className="min-h-screen bg-background p-6">
+    <div className="bg-background p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">

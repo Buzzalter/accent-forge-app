@@ -102,20 +102,21 @@ export const AudioPreview = ({ audioFile, onRemove, showRemove = true }: AudioPr
       
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       
-      const barWidth = canvas.width / bufferLength;
-      let x = 0;
+      // Simplified bar visualization
+      const barCount = 32; // Reduced from full buffer length
+      const barWidth = canvas.width / barCount;
       
-      const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-      gradient.addColorStop(0, 'hsl(195, 100%, 65%)');
-      gradient.addColorStop(1, 'hsl(200, 95%, 55%)');
-      
-      for (let i = 0; i < bufferLength; i++) {
-        const barHeight = (dataArray[i] / 255) * canvas.height;
+      for (let i = 0; i < barCount; i++) {
+        const dataIndex = Math.floor((i / barCount) * bufferLength);
+        const barHeight = (dataArray[dataIndex] / 255) * canvas.height;
+        
+        // Simple gradient from primary to accent
+        const gradient = ctx.createLinearGradient(0, canvas.height, 0, canvas.height - barHeight);
+        gradient.addColorStop(0, 'hsl(200, 95%, 55%)');
+        gradient.addColorStop(1, 'hsl(195, 100%, 65%)');
         
         ctx.fillStyle = gradient;
-        ctx.fillRect(x, canvas.height - barHeight, barWidth - 1, barHeight);
-        
-        x += barWidth;
+        ctx.fillRect(i * barWidth, canvas.height - barHeight, barWidth - 2, barHeight);
       }
       
       if (isPlaying) {
@@ -158,21 +159,21 @@ export const AudioPreview = ({ audioFile, onRemove, showRemove = true }: AudioPr
   };
 
   return (
-    <div className="border border-border rounded-lg p-4 bg-card">
+    <div className="border border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5 rounded-lg p-4">
       <audio ref={audioRef} src={audioFile.url} />
       
-      <div className="flex items-center gap-3 mb-3">
+      <div className="flex items-center gap-3 mb-4">
         <Button
           size="sm"
           variant="outline"
           onClick={togglePlayPause}
-          className="p-2"
+          className="p-2 border-primary/30 hover:bg-primary/10 hover:border-primary"
         >
-          {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+          {isPlaying ? <Pause className="h-4 w-4 text-primary" /> : <Play className="h-4 w-4 text-primary" />}
         </Button>
         
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium truncate">{audioFile.file.name}</p>
+          <p className="text-sm font-medium text-primary truncate">{audioFile.file.name}</p>
           <p className="text-xs text-muted-foreground">
             {formatTime(currentTime)} / {formatTime(duration)}
           </p>
@@ -183,9 +184,9 @@ export const AudioPreview = ({ audioFile, onRemove, showRemove = true }: AudioPr
             size="sm"
             variant="ghost"
             onClick={handleDownload}
-            className="p-2"
+            className="p-2 hover:bg-primary/10"
           >
-            <Download className="h-4 w-4" />
+            <Download className="h-4 w-4 text-primary" />
           </Button>
           
           {showRemove && onRemove && (
@@ -193,7 +194,7 @@ export const AudioPreview = ({ audioFile, onRemove, showRemove = true }: AudioPr
               size="sm"
               variant="ghost"
               onClick={onRemove}
-              className="p-2 text-destructive hover:text-destructive"
+              className="p-2 text-destructive hover:text-destructive hover:bg-destructive/10"
             >
               <X className="h-4 w-4" />
             </Button>
@@ -201,21 +202,21 @@ export const AudioPreview = ({ audioFile, onRemove, showRemove = true }: AudioPr
         </div>
       </div>
       
-      {/* Audio Visualizer */}
-      <div className="h-20 bg-muted/30 rounded border">
+      {/* Simplified Audio Visualizer */}
+      <div className="h-16 bg-gradient-to-r from-primary/10 to-accent/10 rounded border border-primary/20 overflow-hidden">
         <canvas
           ref={canvasRef}
           width={300}
-          height={80}
-          className="w-full h-full rounded"
+          height={64}
+          className="w-full h-full"
         />
       </div>
       
       {/* Progress Bar */}
       <div className="mt-3">
-        <div className="w-full bg-muted rounded-full h-2">
+        <div className="w-full bg-muted/50 rounded-full h-2 overflow-hidden">
           <div
-            className="bg-primary h-2 rounded-full transition-all duration-100"
+            className="bg-gradient-to-r from-primary to-accent h-2 rounded-full transition-all duration-100"
             style={{ width: `${duration > 0 ? (currentTime / duration) * 100 : 0}%` }}
           />
         </div>
