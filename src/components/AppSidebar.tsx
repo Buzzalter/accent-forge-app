@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { AudioWaveform, Mic } from "lucide-react";
+import { AudioWaveform, Mic, GraduationCap } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -20,10 +20,9 @@ const menuItems = [
     icon: AudioWaveform,
   },
   {
-    title: "Coming Soon",
-    url: "/feature-2",
-    icon: Mic,
-    disabled: true,
+    title: "Voice Model Training",
+    url: "/training",
+    icon: GraduationCap,
   },
 ];
 
@@ -63,21 +62,11 @@ export function AppSidebar() {
             <SidebarMenu>
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton 
-                    asChild={!item.disabled}
-                    className={item.disabled ? "opacity-50 cursor-not-allowed" : ""}
-                  >
-                    {item.disabled ? (
-                      <div className="flex items-center gap-3 w-full">
-                        <item.icon className="h-4 w-4" />
-                        {!isCollapsed && <span>{item.title}</span>}
-                      </div>
-                    ) : (
-                      <NavLink to={item.url} end className={getNavCls}>
-                        <item.icon className="h-4 w-4" />
-                        {!isCollapsed && <span>{item.title}</span>}
-                      </NavLink>
-                    )}
+                  <SidebarMenuButton asChild>
+                    <NavLink to={item.url} end className={getNavCls}>
+                      <item.icon className="h-4 w-4" />
+                      {!isCollapsed && <span>{item.title}</span>}
+                    </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}

@@ -1,0 +1,44 @@
+export const TrainingSpinner = () => {
+  return (
+    <div className="flex flex-col items-center justify-center py-12 space-y-8">
+      {/* Main Audio-Themed Spinner with Orange Theme */}
+      <div className="relative">
+        {/* Vinyl Record Base */}
+        <div className="w-24 h-24 bg-gray-700/60 rounded-full animate-spin flex items-center justify-center shadow-2xl">
+          {/* Record Grooves */}
+          <div className="w-20 h-20 border-2 border-gray-500/70 rounded-full"></div>
+          <div className="absolute w-16 h-16 border border-gray-400/60 rounded-full"></div>
+          <div className="absolute w-12 h-12 border border-gray-500/70 rounded-full"></div>
+          {/* Center Label - Orange themed */}
+          <div className="absolute w-8 h-8 bg-gradient-to-br from-training-primary to-training-accent rounded-full flex items-center justify-center">
+            <div className="w-2 h-2 bg-white rounded-full"></div>
+          </div>
+        </div>
+        
+        {/* Radiating Sound Waves - Orange themed */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          {[...Array(4)].map((_, i) => (
+            <div
+              key={i}
+              className="absolute border-4 border-training-accent/50 rounded-full animate-ping"
+              style={{
+                width: `${40 + i * 20}px`,
+                height: `${40 + i * 20}px`,
+                animationDelay: `${i * 0.3}s`,
+                animationDuration: '1.5s',
+              }}
+            />
+          ))}
+        </div>
+      </div>
+      
+      {/* Processing Text */}
+      <div className="text-center space-y-2">
+        <h3 className="text-lg font-semibold text-training-primary animate-pulse">🔥 Training Model</h3>
+        <p className="text-sm text-muted-foreground">
+          Cooking up some AI magic...
+        </p>
+      </div>
+    </div>
+  );
+};

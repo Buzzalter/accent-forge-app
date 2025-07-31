@@ -29,6 +29,12 @@ All colors MUST be HSL.
     --accent: 195 100% 65%;
     --accent-foreground: 0 0% 100%;
 
+    /* Training theme colors - warm orange */
+    --training-primary: 25 95% 53%;
+    --training-primary-foreground: 0 0% 100%;
+    --training-accent: 20 90% 48%;
+    --training-accent-foreground: 0 0% 100%;
+
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
@@ -76,6 +82,12 @@ All colors MUST be HSL.
 
     --accent: 217.2 32.6% 17.5%;
     --accent-foreground: 210 40% 98%;
+
+    /* Training theme colors - warm orange (dark mode) */
+    --training-primary: 25 95% 53%;
+    --training-primary-foreground: 0 0% 100%;
+    --training-accent: 20 90% 58%;
+    --training-accent-foreground: 0 0% 100%;
 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
