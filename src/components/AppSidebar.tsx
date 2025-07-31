@@ -34,13 +34,13 @@ export function AppSidebar() {
   const isTrainingPage = currentPath === '/training';
 
   const isActive = (path: string) => currentPath === path;
-  const getNavCls = ({ isActive }: { isActive: boolean }) => {
+  const getNavCls = (path: string) => ({ isActive }: { isActive: boolean }) => {
     if (!isActive) return "hover:bg-muted/50";
     
-    // Determine active colors based on which page the active item belongs to
-    if (currentPath === '/') {
+    // Determine active colors based on which specific item is active
+    if (path === '/') {
       return 'bg-primary/10 text-primary font-medium border-r-2 border-primary';
-    } else if (currentPath === '/training') {
+    } else if (path === '/training') {
       return 'bg-training-primary/10 text-training-primary font-medium border-r-2 border-training-primary';
     }
     return "hover:bg-muted/50";
@@ -85,7 +85,7 @@ export function AppSidebar() {
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <NavLink to={item.url} end className={getNavCls}>
+                    <NavLink to={item.url} end className={getNavCls(item.url)}>
                       <item.icon className="h-4 w-4" />
                       {!isCollapsed && <span>{item.title}</span>}
                     </NavLink>
