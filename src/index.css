@@ -29,10 +29,10 @@ All colors MUST be HSL.
     --accent: 195 100% 65%;
     --accent-foreground: 0 0% 100%;
 
-    /* Training theme colors - warm orange primary with sea green accent */
-    --training-primary: 25 95% 53%;
+    /* Training theme colors - sea green primary and accent */
+    --training-primary: 174 72% 56%;
     --training-primary-foreground: 0 0% 100%;
-    --training-accent: 174 72% 56%;
+    --training-accent: 158 64% 52%;
     --training-accent-foreground: 0 0% 100%;
 
     --destructive: 0 84.2% 60.2%;
@@ -83,10 +83,10 @@ All colors MUST be HSL.
     --accent: 217.2 32.6% 17.5%;
     --accent-foreground: 210 40% 98%;
 
-    /* Training theme colors - warm orange primary with sea green accent (dark mode) */
-    --training-primary: 25 95% 53%;
+    /* Training theme colors - sea green primary and accent (dark mode) */
+    --training-primary: 174 72% 56%;
     --training-primary-foreground: 0 0% 100%;
-    --training-accent: 174 72% 56%;
+    --training-accent: 158 64% 52%;
     --training-accent-foreground: 0 0% 100%;
 
     --destructive: 0 62.8% 30.6%;

@@ -1,7 +1,7 @@
 export const TrainingSpinner = () => {
   return (
     <div className="flex flex-col items-center justify-center py-12 space-y-8">
-      {/* Main Audio-Themed Spinner with Orange Theme */}
+      {/* Main Audio-Themed Spinner with Sea Green Theme */}
       <div className="relative">
         {/* Vinyl Record Base */}
         <div className="w-24 h-24 bg-gray-700/60 rounded-full animate-spin flex items-center justify-center shadow-2xl">
@@ -9,13 +9,13 @@ export const TrainingSpinner = () => {
           <div className="w-20 h-20 border-2 border-gray-500/70 rounded-full"></div>
           <div className="absolute w-16 h-16 border border-gray-400/60 rounded-full"></div>
           <div className="absolute w-12 h-12 border border-gray-500/70 rounded-full"></div>
-          {/* Center Label - Orange themed */}
+          {/* Center Label - Sea Green themed */}
           <div className="absolute w-8 h-8 bg-gradient-to-br from-training-primary to-training-accent rounded-full flex items-center justify-center">
             <div className="w-2 h-2 bg-white rounded-full"></div>
           </div>
         </div>
         
-        {/* Radiating Sound Waves - Orange themed */}
+        {/* Radiating Sound Waves - Sea Green themed */}
         <div className="absolute inset-0 flex items-center justify-center">
           {[...Array(4)].map((_, i) => (
             <div
@@ -34,7 +34,7 @@ export const TrainingSpinner = () => {
       
       {/* Processing Text */}
       <div className="text-center space-y-2">
-        <h3 className="text-lg font-semibold text-training-primary animate-pulse">🔥 Training Model</h3>
+        <h3 className="text-lg font-semibold text-training-primary animate-pulse">🌊 Training Model</h3>
         <p className="text-sm text-muted-foreground">
           Cooking up some AI magic...
         </p>

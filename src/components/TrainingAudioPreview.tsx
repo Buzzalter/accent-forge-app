@@ -103,11 +103,11 @@ export const TrainingAudioPreview = ({ audioFile, onRemove, showRemove = true }:
         for (let i = 0; i < bufferLength; i++) {
           barHeight = (dataArray[i] / 255) * canvas.height * 0.8;
           
-          // Training theme colors - orange to sea green gradient
+          // Training theme colors - sea green gradient
           const ratio = i / bufferLength;
-          const r = Math.floor(255 * (1 - ratio) + 56 * ratio);
-          const g = Math.floor(165 * (1 - ratio) + 178 * ratio);
-          const b = Math.floor(0 * (1 - ratio) + 142 * ratio);
+          const r = Math.floor(56 * (1 - ratio) + 46 * ratio);
+          const g = Math.floor(178 * (1 - ratio) + 160 * ratio);
+          const b = Math.floor(142 * (1 - ratio) + 133 * ratio);
           
           ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
           ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
