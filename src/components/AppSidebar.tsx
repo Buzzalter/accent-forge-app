@@ -66,7 +66,7 @@ export function AppSidebar() {
           {!isCollapsed && (
             <div>
               <h2 className={`font-semibold text-lg ${
-                isTrainingPage ? 'text-training-primary' : 'text-accent'
+                isTrainingPage ? 'text-training-primary' : 'text-primary'
               }`}>AI Voice Studio</h2>
               <p className="text-xs text-muted-foreground">Transform your voice</p>
             </div>
