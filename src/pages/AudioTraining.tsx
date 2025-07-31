@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { AudioUpload } from "@/components/AudioUpload";
 import { TrainingAudioUpload } from "@/components/TrainingAudioUpload";
 import { AudioPreview } from "@/components/AudioPreview";
+import { TrainingAudioPreview } from "@/components/TrainingAudioPreview";
 import { TrainingSpinner } from "@/components/TrainingSpinner";
 import { TrainModelDialog } from "@/components/TrainModelDialog";
 import { RotateCcw } from "lucide-react";
@@ -152,7 +153,7 @@ const AudioTraining = () => {
                 {!referenceAudio ? (
                   <TrainingAudioUpload onUpload={handleAudioUpload} />
                 ) : (
-                  <AudioPreview 
+                  <TrainingAudioPreview 
                     audioFile={referenceAudio} 
                     onRemove={() => setReferenceAudio(null)}
                   />
@@ -193,7 +194,7 @@ const AudioTraining = () => {
                 <TrainingSpinner />
               ) : outputAudio ? (
                 <>
-                  <AudioPreview audioFile={outputAudio} showRemove={false} />
+                  <TrainingAudioPreview audioFile={outputAudio} showRemove={false} />
                   <TrainModelDialog onTrainStart={handleTrainStart} />
                 </>
               ) : (
