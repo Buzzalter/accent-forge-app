@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+
 import { AudioUpload } from "@/components/AudioUpload";
 import { AudioPreview } from "@/components/AudioPreview";
 import { TrainingSpinner } from "@/components/TrainingSpinner";
@@ -161,12 +161,11 @@ const AudioTraining = () => {
               {/* Prompt Input */}
               <div className="space-y-2">
                 <Label htmlFor="prompt">Training Prompt</Label>
-                <Textarea
+                <Input
                   id="prompt"
                   placeholder="Describe the voice characteristics you want to train..."
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
-                  rows={4}
                 />
               </div>
 
