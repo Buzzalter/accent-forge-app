@@ -6,17 +6,31 @@ export const ProcessingSpinner = () => {
       {/* Main Funky Spinner */}
       <div className="relative">
         {/* Outer rotating ring */}
-        <div className="w-20 h-20 border-4 border-transparent border-t-primary border-r-accent rounded-full animate-spin"></div>
+        <div className="w-20 h-20 border-8 border-transparent border-t-primary border-r-accent rounded-full animate-spin"></div>
         
         {/* Middle pulsing ring */}
-        <div className="absolute inset-2 w-16 h-16 border-4 border-transparent border-b-accent border-l-primary rounded-full animate-spin animation-delay-150" style={{ animationDirection: 'reverse' }}></div>
+        <div className="absolute inset-2 w-16 h-16 border-6 border-transparent border-b-accent border-l-primary rounded-full animate-spin animation-delay-150" style={{ animationDirection: 'reverse' }}></div>
         
-        {/* Inner bouncing element */}
-        <div className="absolute inset-6 w-8 h-8 bg-gradient-to-tr from-primary to-accent rounded-full animate-bounce"></div>
-        
-        {/* Center audio icon */}
+        {/* Moving wiggly sound wave line */}
         <div className="absolute inset-0 flex items-center justify-center">
-          <Volume2 className="h-6 w-6 text-primary animate-pulse" />
+          <svg width="32" height="32" viewBox="0 0 32 32" className="animate-pulse">
+            <path
+              d="M2,16 Q8,8 16,16 T30,16"
+              stroke="currentColor"
+              strokeWidth="2"
+              fill="none"
+              className="text-primary animate-bounce"
+              style={{ animationDuration: '0.8s' }}
+            />
+            <path
+              d="M2,16 Q8,24 16,16 T30,16"
+              stroke="currentColor"
+              strokeWidth="2"
+              fill="none"
+              className="text-accent animate-bounce"
+              style={{ animationDuration: '1.2s', animationDelay: '0.4s' }}
+            />
+          </svg>
         </div>
       </div>
       
