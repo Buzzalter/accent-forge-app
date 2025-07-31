@@ -34,8 +34,10 @@ export function AppSidebar() {
   const isTrainingPage = currentPath === '/training';
 
   const isActive = (path: string) => currentPath === path;
-  const getNavCls = (path: string) => ({ isActive }: { isActive: boolean }) => {
-    if (!isActive) return "hover:bg-muted/50";
+  
+  const getActiveStyles = (path: string) => {
+    const active = isActive(path);
+    if (!active) return "hover:bg-muted/50";
     
     // Determine active colors based on which specific item is active
     if (path === '/') {
@@ -85,7 +87,7 @@ export function AppSidebar() {
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <NavLink to={item.url} end className={getNavCls(item.url)}>
+                    <NavLink to={item.url} end className={getActiveStyles(item.url)}>
                       <item.icon className="h-4 w-4" />
                       {!isCollapsed && <span>{item.title}</span>}
                     </NavLink>
