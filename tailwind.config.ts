@@ -65,12 +65,10 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
-				training: {
-					primary: 'hsl(var(--training-primary))',
-					'primary-foreground': 'hsl(var(--training-primary-foreground))',
-					accent: 'hsl(var(--training-accent))',
-					'accent-foreground': 'hsl(var(--training-accent-foreground))'
-				}
+				'training-primary': 'hsl(var(--training-primary))',
+				'training-primary-foreground': 'hsl(var(--training-primary-foreground))',
+				'training-accent': 'hsl(var(--training-accent))',
+				'training-accent-foreground': 'hsl(var(--training-accent-foreground))'
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
