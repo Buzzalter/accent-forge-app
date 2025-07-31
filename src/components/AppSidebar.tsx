@@ -34,14 +34,17 @@ export function AppSidebar() {
   const isTrainingPage = currentPath === '/training';
 
   const isActive = (path: string) => currentPath === path;
-  const getNavCls = ({ isActive }: { isActive: boolean }) =>
-    isActive 
-      ? `font-medium border-r-2 ${
-          isTrainingPage 
-            ? 'bg-training-primary/10 text-training-primary border-training-primary' 
-            : 'bg-primary/10 text-primary border-primary'
-        }`
-      : "hover:bg-muted/50";
+  const getNavCls = ({ isActive }: { isActive: boolean }) => {
+    if (!isActive) return "hover:bg-muted/50";
+    
+    // Determine active colors based on which page the active item belongs to
+    if (currentPath === '/') {
+      return 'bg-primary/10 text-primary font-medium border-r-2 border-primary';
+    } else if (currentPath === '/training') {
+      return 'bg-training-primary/10 text-training-primary font-medium border-r-2 border-training-primary';
+    }
+    return "hover:bg-muted/50";
+  };
 
   return (
     <Sidebar
