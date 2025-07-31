@@ -16,15 +16,11 @@ export const Layout = ({ children }: LayoutProps) => {
       <div className="min-h-screen flex w-full">
         <AppSidebar />
         <div className="flex-1 flex flex-col">
-          <header className={`h-12 flex items-center justify-between border-b px-4 ${
-            isTrainingPage 
-              ? 'border-training-primary/20 bg-training-primary/5' 
-              : 'border-border bg-card'
-          }`}>
+          <header className="h-12 flex items-center justify-between border-b border-border bg-card px-4">
             <div className="flex items-center">
               <SidebarTrigger className="mr-2" />
               <h1 className={`text-sm font-medium ${
-                isTrainingPage ? 'text-training-primary' : 'text-muted-foreground'
+                isTrainingPage ? 'text-training-primary' : 'text-primary'
               }`}>
                 AI Voice Processing Platform
               </h1>

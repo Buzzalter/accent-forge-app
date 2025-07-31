@@ -121,7 +121,7 @@ const AudioProcessor = () => {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-accent mb-2">
+          <h1 className="text-4xl font-bold text-primary mb-2">
             Voice Accent Generator
           </h1>
           <p className="text-lg text-muted-foreground">
