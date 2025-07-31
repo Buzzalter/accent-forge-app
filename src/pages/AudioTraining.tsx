@@ -115,7 +115,7 @@ const AudioTraining = () => {
   const isGenerateDisabled = !referenceAudio || !prompt.trim() || isGenerating;
 
   return (
-    <div className="bg-background p-6">
+    <div className="bg-gradient-to-br from-training-primary/5 via-background to-training-accent/5 min-h-screen p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
@@ -168,7 +168,7 @@ const AudioTraining = () => {
                   placeholder="Describe the voice characteristics you want to train..."
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
-                  className="border-training-primary/30 focus:border-training-primary focus:ring-training-primary"
+                  className="border-training-primary/30 focus:border-training-primary focus:ring-training-primary bg-training-primary/5 focus:bg-training-primary/10"
                 />
               </div>
 
