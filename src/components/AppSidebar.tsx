@@ -31,24 +31,43 @@ export function AppSidebar() {
   const location = useLocation();
   const currentPath = location.pathname;
   const isCollapsed = state === "collapsed";
+  const isTrainingPage = currentPath === '/training';
 
   const isActive = (path: string) => currentPath === path;
   const getNavCls = ({ isActive }: { isActive: boolean }) =>
-    isActive ? "bg-primary/10 text-primary font-medium border-r-2 border-primary" : "hover:bg-muted/50";
+    isActive 
+      ? `font-medium border-r-2 ${
+          isTrainingPage 
+            ? 'bg-training-primary/10 text-training-primary border-training-primary' 
+            : 'bg-primary/10 text-primary border-primary'
+        }`
+      : "hover:bg-muted/50";
 
   return (
     <Sidebar
-      className={isCollapsed ? "w-14" : "w-64"}
+      className={`${isCollapsed ? "w-14" : "w-64"} ${
+        isTrainingPage 
+          ? 'border-training-primary/20 bg-training-primary/5' 
+          : 'border-border bg-sidebar'
+      }`}
       collapsible="icon"
     >
-      <SidebarHeader className="border-b border-border p-4">
+      <SidebarHeader className={`border-b p-4 ${
+        isTrainingPage ? 'border-training-primary/20' : 'border-border'
+      }`}>
         <div className="flex items-center gap-3">
-          <div className="h-8 w-8 bg-gradient-to-br from-primary to-accent rounded-lg flex items-center justify-center">
+          <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${
+            isTrainingPage 
+              ? 'bg-gradient-to-br from-training-primary to-training-accent' 
+              : 'bg-gradient-to-br from-primary to-accent'
+          }`}>
             <AudioWaveform className="h-5 w-5 text-white" />
           </div>
           {!isCollapsed && (
             <div>
-              <h2 className="font-semibold text-lg text-accent">AI Voice Studio</h2>
+              <h2 className={`font-semibold text-lg ${
+                isTrainingPage ? 'text-training-primary' : 'text-accent'
+              }`}>AI Voice Studio</h2>
               <p className="text-xs text-muted-foreground">Transform your voice</p>
             </div>
           )}
