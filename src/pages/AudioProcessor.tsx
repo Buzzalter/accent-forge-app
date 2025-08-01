@@ -293,27 +293,27 @@ const AudioProcessor = () => {
                   {/* Voice Gender Toggle */}
                   <div className="space-y-2">
                     <Label className="text-center block">Voice Gender</Label>
-                    <div className="flex justify-center gap-4">
-                      <label className="flex items-center space-x-2 cursor-pointer">
-                        <input
-                          type="radio"
-                          name="voiceGender"
-                          checked={!voiceGender}
-                          onChange={() => setVoiceGender(false)}
-                          className="w-4 h-4 text-primary border-2 border-input focus:ring-2 focus:ring-primary"
-                        />
-                        <span className="text-sm font-medium">Masculine</span>
-                      </label>
-                      <label className="flex items-center space-x-2 cursor-pointer">
-                        <input
-                          type="radio"
-                          name="voiceGender"
-                          checked={voiceGender}
-                          onChange={() => setVoiceGender(true)}
-                          className="w-4 h-4 text-primary border-2 border-input focus:ring-2 focus:ring-primary"
-                        />
-                        <span className="text-sm font-medium">Feminine</span>
-                      </label>
+                    <div className="flex justify-center gap-3">
+                      <div
+                        onClick={() => setVoiceGender(false)}
+                        className={`flex-1 max-w-24 p-3 text-center rounded-lg border-2 cursor-pointer transition-all ${
+                          !voiceGender 
+                            ? 'border-primary bg-primary/5 text-primary' 
+                            : 'border-border hover:border-primary/50'
+                        }`}
+                      >
+                        <div className="text-sm font-medium">Masculine</div>
+                      </div>
+                      <div
+                        onClick={() => setVoiceGender(true)}
+                        className={`flex-1 max-w-24 p-3 text-center rounded-lg border-2 cursor-pointer transition-all ${
+                          voiceGender 
+                            ? 'border-primary bg-primary/5 text-primary' 
+                            : 'border-border hover:border-primary/50'
+                        }`}
+                      >
+                        <div className="text-sm font-medium">Feminine</div>
+                      </div>
                     </div>
                   </div>
 
