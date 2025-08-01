@@ -48,7 +48,7 @@ class TrainingAPI {
   private baseUrl: string;
   private apiKey: string;
 
-  constructor(baseUrl: string = process.env.VITE_TRAINING_API_URL || '', apiKey: string = '') {
+  constructor(baseUrl: string = import.meta.env.VITE_TRAINING_API_URL || '', apiKey: string = '') {
     this.baseUrl = baseUrl;
     this.apiKey = apiKey;
   }
