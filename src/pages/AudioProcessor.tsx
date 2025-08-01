@@ -4,6 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
+import { Slider } from "@/components/ui/slider";
 import { AudioUpload } from "@/components/AudioUpload";
 import { AudioPreview } from "@/components/AudioPreview";
 import { ProcessingSpinner } from "@/components/ProcessingSpinner";
@@ -32,6 +35,11 @@ const AudioProcessor = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [outputAudio, setOutputAudio] = useState<AudioFile | null>(null);
   const [processingUuid, setProcessingUuid] = useState<string | null>(null);
+  
+  // Creation tab state
+  const [voiceGender, setVoiceGender] = useState(false); // false = Masculine, true = Feminine
+  const [pitch, setPitch] = useState([3]);
+  const [speed, setSpeed] = useState([3]);
 
   const handleAudioUpload = async (file: File) => {
     try {
@@ -62,8 +70,13 @@ const AudioProcessor = () => {
     }
   };
 
-  const handleGenerate = async () => {
-    if (!referenceAudio || !selectedAccent || !prompt.trim()) return;
+
+  const handleGenerate = async (useCreationMode = false) => {
+    if (useCreationMode) {
+      if (!selectedAccent || !prompt.trim()) return;
+    } else {
+      if (!referenceAudio || !selectedAccent || !prompt.trim()) return;
+    }
 
     if (!isTrainingAPIConfigured()) {
       toast({
@@ -79,12 +92,20 @@ const AudioProcessor = () => {
     setProcessingUuid(null);
 
     try {
-      // Start sample generation
+      const config = useCreationMode 
+        ? { 
+            accent: selectedAccent, 
+            gender: voiceGender ? 'feminine' : 'masculine',
+            pitch: pitch[0],
+            speed: speed[0]
+          }
+        : { accent: selectedAccent };
+
       const response = await generateAudioSample(
-        'accent_generation',
+        useCreationMode ? 'voice_creation' : 'accent_generation',
         `${prompt} (Accent: ${selectedAccent})`,
         undefined,
-        { accent: selectedAccent }
+        config
       );
       
       setProcessingUuid(response.uuid);
@@ -95,7 +116,6 @@ const AudioProcessor = () => {
           const status = await checkSampleStatus(response.uuid);
           
           if (status.status === 'completed' && status.audioUrl) {
-            // Create audio file from URL
             const audioResponse = await fetch(status.audioUrl);
             const audioBlob = await audioResponse.blob();
             const audioFile = new File([audioBlob], 'generated-audio.wav', { type: 'audio/wav' });
@@ -112,7 +132,7 @@ const AudioProcessor = () => {
             
             toast({
               title: "Audio generated successfully",
-              description: "Your audio has been processed with the selected accent.",
+              description: useCreationMode ? "Your audio has been created." : "Your audio has been processed with the selected accent.",
             });
           } else if (status.status === 'failed') {
             setIsProcessing(false);
@@ -129,7 +149,6 @@ const AudioProcessor = () => {
         }
       }, 2000);
       
-      // Clean up interval after 5 minutes max
       setTimeout(() => {
         clearInterval(pollInterval);
         if (isProcessing) {
@@ -160,13 +179,19 @@ const AudioProcessor = () => {
     setOutputAudio(null);
     setIsProcessing(false);
     setProcessingUuid(null);
+    setVoiceGender(false);
+    setPitch([3]);
+    setSpeed([3]);
     toast({
       title: "Cleared",
       description: "All inputs and outputs have been cleared.",
     });
   };
 
-  const isGenerateDisabled = !referenceAudio || !selectedAccent || !prompt.trim() || isProcessing;
+  const [activeTab, setActiveTab] = useState("reference");
+  
+  const isGenerateDisabledReference = !referenceAudio || !selectedAccent || !prompt.trim() || isProcessing;
+  const isGenerateDisabledCreation = !selectedAccent || !prompt.trim() || isProcessing;
 
   return (
     <div className="bg-background p-6">
@@ -200,57 +225,149 @@ const AudioProcessor = () => {
             <CardHeader>
               <CardTitle className="text-primary">Input</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Audio Upload */}
-              <div className="space-y-2">
-                <Label>Reference Audio</Label>
-                {!referenceAudio ? (
-                  <AudioUpload onUpload={handleAudioUpload} />
-                ) : (
-                  <AudioPreview 
-                    audioFile={referenceAudio} 
-                    onRemove={() => setReferenceAudio(null)}
-                  />
-                )}
-              </div>
+            <CardContent>
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="reference">Reference</TabsTrigger>
+                  <TabsTrigger value="creation">Creation</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="reference" className="space-y-6 mt-6">
+                  {/* Audio Upload */}
+                  <div className="space-y-2">
+                    <Label>Reference Audio</Label>
+                    {!referenceAudio ? (
+                      <AudioUpload onUpload={handleAudioUpload} />
+                    ) : (
+                      <AudioPreview 
+                        audioFile={referenceAudio} 
+                        onRemove={() => setReferenceAudio(null)}
+                      />
+                    )}
+                  </div>
 
-              {/* Prompt Input */}
-              <div className="space-y-2">
-                <Label htmlFor="prompt">Prompt</Label>
-                <Input
-                  id="prompt"
-                  placeholder="Enter your text prompt..."
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                />
-              </div>
+                  {/* Prompt Input */}
+                  <div className="space-y-2">
+                    <Label htmlFor="prompt">Prompt</Label>
+                    <Input
+                      id="prompt"
+                      placeholder="Enter your text prompt..."
+                      value={prompt}
+                      onChange={(e) => setPrompt(e.target.value)}
+                    />
+                  </div>
 
-              {/* Accent Selection */}
-              <div className="space-y-2">
-                <Label>Accent</Label>
-                <Select value={selectedAccent} onValueChange={setSelectedAccent}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select an accent" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {accents.map((accent) => (
-                      <SelectItem key={accent.value} value={accent.value}>
-                        {accent.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+                  {/* Accent Selection */}
+                  <div className="space-y-2">
+                    <Label>Accent</Label>
+                    <Select value={selectedAccent} onValueChange={setSelectedAccent}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select an accent" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {accents.map((accent) => (
+                          <SelectItem key={accent.value} value={accent.value}>
+                            {accent.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-              {/* Generate Button */}
-              <Button 
-                onClick={handleGenerate}
-                disabled={isGenerateDisabled}
-                className="w-full"
-                size="lg"
-              >
-                Generate
-              </Button>
+                  {/* Generate Button */}
+                  <Button 
+                    onClick={() => handleGenerate(false)}
+                    disabled={isGenerateDisabledReference}
+                    className="w-full"
+                    size="lg"
+                  >
+                    Generate
+                  </Button>
+                </TabsContent>
+
+                <TabsContent value="creation" className="space-y-6 mt-6">
+                  {/* Voice Gender Toggle */}
+                  <div className="space-y-2">
+                    <Label>Voice Gender</Label>
+                    <div className="flex items-center space-x-3">
+                      <span className={!voiceGender ? "text-foreground" : "text-muted-foreground"}>
+                        Masculine
+                      </span>
+                      <Switch
+                        checked={voiceGender}
+                        onCheckedChange={setVoiceGender}
+                      />
+                      <span className={voiceGender ? "text-foreground" : "text-muted-foreground"}>
+                        Feminine
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Pitch Slider */}
+                  <div className="space-y-2">
+                    <Label>Pitch: {pitch[0]}</Label>
+                    <Slider
+                      value={pitch}
+                      onValueChange={setPitch}
+                      max={5}
+                      min={1}
+                      step={1}
+                      className="w-full"
+                    />
+                  </div>
+
+                  {/* Speed Slider */}
+                  <div className="space-y-2">
+                    <Label>Speed: {speed[0]}</Label>
+                    <Slider
+                      value={speed}
+                      onValueChange={setSpeed}
+                      max={5}
+                      min={1}
+                      step={1}
+                      className="w-full"
+                    />
+                  </div>
+
+                  {/* Prompt Input */}
+                  <div className="space-y-2">
+                    <Label htmlFor="prompt-creation">Prompt</Label>
+                    <Input
+                      id="prompt-creation"
+                      placeholder="Enter your text prompt..."
+                      value={prompt}
+                      onChange={(e) => setPrompt(e.target.value)}
+                    />
+                  </div>
+
+                  {/* Accent Selection */}
+                  <div className="space-y-2">
+                    <Label>Accent</Label>
+                    <Select value={selectedAccent} onValueChange={setSelectedAccent}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select an accent" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {accents.map((accent) => (
+                          <SelectItem key={accent.value} value={accent.value}>
+                            {accent.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Generate Button */}
+                  <Button 
+                    onClick={() => handleGenerate(true)}
+                    disabled={isGenerateDisabledCreation}
+                    className="w-full"
+                    size="lg"
+                  >
+                    Generate
+                  </Button>
+                </TabsContent>
+              </Tabs>
             </CardContent>
           </Card>
 
