@@ -293,31 +293,27 @@ const AudioProcessor = () => {
                   {/* Voice Gender Toggle */}
                   <div className="space-y-2">
                     <Label className="text-center block">Voice Gender</Label>
-                    <div className="flex justify-center">
-                      <div className="inline-flex rounded-md border border-input bg-background p-1">
-                        <button
-                          type="button"
-                          onClick={() => setVoiceGender(false)}
-                          className={`px-4 py-2 text-sm font-medium rounded-sm transition-colors ${
-                            !voiceGender 
-                              ? 'bg-primary text-primary-foreground shadow-sm' 
-                              : 'text-muted-foreground hover:text-foreground'
-                          }`}
-                        >
-                          Masculine
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setVoiceGender(true)}
-                          className={`px-4 py-2 text-sm font-medium rounded-sm transition-colors ${
-                            voiceGender 
-                              ? 'bg-primary text-primary-foreground shadow-sm' 
-                              : 'text-muted-foreground hover:text-foreground'
-                          }`}
-                        >
-                          Feminine
-                        </button>
-                      </div>
+                    <div className="flex justify-center gap-4">
+                      <label className="flex items-center space-x-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="voiceGender"
+                          checked={!voiceGender}
+                          onChange={() => setVoiceGender(false)}
+                          className="w-4 h-4 text-primary border-2 border-input focus:ring-2 focus:ring-primary"
+                        />
+                        <span className="text-sm font-medium">Masculine</span>
+                      </label>
+                      <label className="flex items-center space-x-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="voiceGender"
+                          checked={voiceGender}
+                          onChange={() => setVoiceGender(true)}
+                          className="w-4 h-4 text-primary border-2 border-input focus:ring-2 focus:ring-primary"
+                        />
+                        <span className="text-sm font-medium">Feminine</span>
+                      </label>
                     </div>
                   </div>
 
