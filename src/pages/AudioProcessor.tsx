@@ -97,9 +97,13 @@ const AudioProcessor = () => {
             accent: selectedAccent, 
             gender: voiceGender ? 'feminine' : 'masculine',
             pitch: pitch[0],
-            speed: speed[0]
+            speed: speed[0],
+            generationType: 'creation'
           }
-        : { accent: selectedAccent };
+        : { 
+            accent: selectedAccent,
+            generationType: 'reference'
+          };
 
       const response = await generateAudioSample(
         useCreationMode ? 'voice_creation' : 'accent_generation',
@@ -288,18 +292,32 @@ const AudioProcessor = () => {
                 <TabsContent value="creation" className="space-y-6 mt-6">
                   {/* Voice Gender Toggle */}
                   <div className="space-y-2">
-                    <Label>Voice Gender</Label>
-                    <div className="flex items-center space-x-3">
-                      <span className={!voiceGender ? "text-foreground" : "text-muted-foreground"}>
-                        Masculine
-                      </span>
-                      <Switch
-                        checked={voiceGender}
-                        onCheckedChange={setVoiceGender}
-                      />
-                      <span className={voiceGender ? "text-foreground" : "text-muted-foreground"}>
-                        Feminine
-                      </span>
+                    <Label className="text-center block">Voice Gender</Label>
+                    <div className="flex justify-center">
+                      <div className="inline-flex rounded-md border border-input bg-background p-1">
+                        <button
+                          type="button"
+                          onClick={() => setVoiceGender(false)}
+                          className={`px-4 py-2 text-sm font-medium rounded-sm transition-colors ${
+                            !voiceGender 
+                              ? 'bg-primary text-primary-foreground shadow-sm' 
+                              : 'text-muted-foreground hover:text-foreground'
+                          }`}
+                        >
+                          Masculine
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setVoiceGender(true)}
+                          className={`px-4 py-2 text-sm font-medium rounded-sm transition-colors ${
+                            voiceGender 
+                              ? 'bg-primary text-primary-foreground shadow-sm' 
+                              : 'text-muted-foreground hover:text-foreground'
+                          }`}
+                        >
+                          Feminine
+                        </button>
+                      </div>
                     </div>
                   </div>
 
