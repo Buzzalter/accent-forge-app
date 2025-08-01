@@ -1,20 +1,17 @@
 const API_BASE_URL = 'http://localhost:8034';
 
 export interface GenerateConfig {
+  uuid: string;
+  task: string;
   prompt: string;
-  audioUuid?: string;
-  voiceSettings?: {
-    voiceGender?: string;
-    accent?: string;
-    speed?: number;
-    pitch?: number;
-    emotion?: string;
-  };
+  accent: string;
+  gender: boolean;
+  speed: number;
+  pitch: number;
 }
 
 export interface TrainingJobConfig {
-  audioUuid: string;
-  prompt: string;
+  uuid: string;
 }
 
 export interface JobResponse {

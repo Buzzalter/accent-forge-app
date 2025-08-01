@@ -70,15 +70,13 @@ const AudioProcessor = () => {
       setGeneratedAudio(null);
 
       const config = {
+        uuid: referenceAudio?.audioUuid || '',
+        task: generationType,
         prompt: promptText,
-        audioUuid: referenceAudio?.audioUuid,
-        voiceSettings: {
-          voiceGender: voiceGender ? 'feminine' : 'masculine',
-          accent,
-          speed: speed[0],
-          pitch: pitch[0],
-          emotion
-        }
+        accent: accent || 'american',
+        gender: voiceGender,
+        speed: speed[0],
+        pitch: pitch[0]
       };
 
       const response = await API.postGenerate(config);

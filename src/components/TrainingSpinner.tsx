@@ -14,7 +14,7 @@ export const TrainingSpinner = ({ uuid }: TrainingSpinnerProps) => {
 
     const pollStatus = async () => {
       try {
-        const status = await API.getStatus(uuid);
+        const status = await API.getTrainingStatus(uuid);
         setProgress(status.progress);
         
         // Update status text based on progress for training

@@ -53,8 +53,13 @@ const AudioTraining = () => {
       setGeneratedPreview(null);
 
       const config = {
+        uuid: referenceAudio.audioUuid,
+        task: 'training',
         prompt: prompt.trim(),
-        audioUuid: referenceAudio.audioUuid
+        accent: 'american',
+        gender: false,
+        speed: 3,
+        pitch: 3
       };
 
       const response = await API.postGenerate(config);
@@ -131,8 +136,7 @@ const AudioTraining = () => {
       setTrainingJobUuid(null);
 
       const config = {
-        audioUuid: referenceAudio.audioUuid,
-        prompt: prompt.trim()
+        uuid: referenceAudio.audioUuid
       };
 
       const response = await API.postTrainingJob(config);
