@@ -12,7 +12,7 @@ import { TrainingSpinner } from "@/components/TrainingSpinner";
 import { TrainModelDialog } from "@/components/TrainModelDialog";
 import { RotateCcw } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { generateAudioSample, checkSampleStatus, submitTrainingJob, isTrainingAPIConfigured } from "@/lib/api";
+import { API } from "@/lib/api";
 
 export interface AudioFile {
   file: File;
@@ -60,7 +60,7 @@ const AudioTraining = () => {
   const handleGenerate = async () => {
     if (!referenceAudio || !prompt.trim()) return;
 
-    if (!isTrainingAPIConfigured()) {
+    if (!API.isConfigured()) {
       toast({
         title: "API not configured",
         description: "Please configure your API settings first.",
@@ -75,19 +75,18 @@ const AudioTraining = () => {
 
     try {
       // Start sample generation for training
-      const response = await generateAudioSample(
-        'voice_training_sample',
-        prompt.trim(),
-        undefined,
-        { referenceAudioUuid: referenceAudio.uuid }
-      );
+      const response = await API.generateSample({
+        task: 'voice_training_sample',
+        prompt: prompt.trim(),
+        voiceSettings: { referenceAudioUuid: referenceAudio.uuid }
+      });
       
       setGenerationUuid(response.uuid);
       
       // Poll for status updates
       const pollInterval = setInterval(async () => {
         try {
-          const status = await checkSampleStatus(response.uuid);
+          const status = await API.getSampleStatus(response.uuid);
           
           if (status.status === 'completed' && status.audioUrl) {
             // Create audio file from URL
@@ -153,11 +152,11 @@ const AudioTraining = () => {
 
     try {
       // Start actual training job
-      const response = await submitTrainingJob(
-        'voice_model_training',
-        referenceAudio.file,
-        prompt.trim()
-      );
+      const response = await API.startTrainingJob({
+        task: 'voice_model_training',
+        referenceAudioFile: referenceAudio.file,
+        prompt: prompt.trim()
+      });
       
       setTrainingJobId(response.uuid);
       

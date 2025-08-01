@@ -23,6 +23,8 @@ export interface SampleGenerationConfig {
     speed?: number;
     pitch?: number;
     emotion?: string;
+    referenceAudioUuid?: string;
+    [key: string]: any; // Allow additional properties
   };
 }
 
@@ -44,20 +46,17 @@ export interface TrainingJobStatus {
   // Add other status fields as needed
 }
 
-class TrainingAPI {
-  private baseUrl: string;
-  private apiKey: string;
+const API_BASE_URL = 'http://localhost:8034';
 
-  constructor(baseUrl: string = import.meta.env.VITE_TRAINING_API_URL || '', apiKey: string = '') {
+export const API = {
+  // Set API configuration (maintains backward compatibility)
+  setConfig(baseUrl: string = API_BASE_URL, apiKey: string = '') {
     this.baseUrl = baseUrl;
     this.apiKey = apiKey;
-  }
+  },
 
-  // Set API configuration
-  setConfig(baseUrl: string, apiKey: string) {
-    this.baseUrl = baseUrl;
-    this.apiKey = apiKey;
-  }
+  baseUrl: API_BASE_URL,
+  apiKey: '',
 
   // Start a new training job
   async startTrainingJob(config: TrainingJobConfig): Promise<TrainingJobResponse> {
@@ -88,7 +87,7 @@ class TrainingAPI {
       createdAt: data.createdAt || new Date().toISOString(),
       ...data,
     };
-  }
+  },
 
   // Get status of a specific training job
   async getTrainingJobStatus(uuid: string): Promise<TrainingJobStatus> {
@@ -113,7 +112,7 @@ class TrainingAPI {
       updatedAt: data.updatedAt || new Date().toISOString(),
       ...data,
     };
-  }
+  },
 
   // Get all training jobs
   async getAllTrainingJobs(): Promise<TrainingJobStatus[]> {
@@ -131,7 +130,7 @@ class TrainingAPI {
 
     const data = await response.json();
     return data.jobs || [];
-  }
+  },
 
   // Cancel a training job
   async cancelTrainingJob(uuid: string): Promise<boolean> {
@@ -149,7 +148,7 @@ class TrainingAPI {
 
     const data = await response.json();
     return data.success || false;
-  }
+  },
 
   // Get training result/output
   async getTrainingResult(uuid: string): Promise<any> {
@@ -166,7 +165,7 @@ class TrainingAPI {
     }
 
     return await response.json();
-  }
+  },
 
   // Generate audio sample
   async generateSample(config: SampleGenerationConfig): Promise<SampleGenerationResponse> {
@@ -198,7 +197,7 @@ class TrainingAPI {
       createdAt: data.createdAt || new Date().toISOString(),
       ...data,
     };
-  }
+  },
 
   // Get sample generation status
   async getSampleStatus(uuid: string): Promise<SampleGenerationResponse> {
@@ -224,7 +223,7 @@ class TrainingAPI {
       createdAt: data.createdAt || new Date().toISOString(),
       ...data,
     };
-  }
+  },
 
   // Get general status (for any UUID - training or sample)
   async getStatus(uuid: string): Promise<{ status: string; progress: number; type: 'training' | 'sample' }> {
@@ -247,12 +246,12 @@ class TrainingAPI {
       type: data.type || 'sample',
       ...data,
     };
-  }
+  },
 
   // Utility method to check if API is configured
   isConfigured(): boolean {
     return !!this.baseUrl && !!this.apiKey;
-  }
+  },
 
   // Utility method to validate API connection
   async testConnection(): Promise<boolean> {
@@ -269,18 +268,15 @@ class TrainingAPI {
       return false;
     }
   }
-}
+};
 
-// Export singleton instance
-export const trainingAPI = new TrainingAPI();
-
-// Export utility functions
-export const setTrainingAPIConfig = (baseUrl: string, apiKey: string) => {
-  trainingAPI.setConfig(baseUrl, apiKey);
+// Export backward compatible utility functions
+export const setTrainingAPIConfig = (baseUrl: string = API_BASE_URL, apiKey: string = '') => {
+  API.setConfig(baseUrl, apiKey);
 };
 
 export const isTrainingAPIConfigured = () => {
-  return trainingAPI.isConfigured();
+  return API.isConfigured();
 };
 
 // Training job functions
@@ -289,7 +285,7 @@ export const submitTrainingJob = async (
   referenceAudioFile: File,
   prompt: string
 ): Promise<TrainingJobResponse> => {
-  return await trainingAPI.startTrainingJob({
+  return await API.startTrainingJob({
     task,
     referenceAudioFile,
     prompt,
@@ -297,11 +293,11 @@ export const submitTrainingJob = async (
 };
 
 export const checkJobStatus = async (uuid: string): Promise<TrainingJobStatus> => {
-  return await trainingAPI.getTrainingJobStatus(uuid);
+  return await API.getTrainingJobStatus(uuid);
 };
 
 export const fetchAllJobs = async (): Promise<TrainingJobStatus[]> => {
-  return await trainingAPI.getAllTrainingJobs();
+  return await API.getAllTrainingJobs();
 };
 
 // Sample generation functions
@@ -311,7 +307,7 @@ export const generateAudioSample = async (
   modelId?: string,
   voiceSettings?: any
 ): Promise<SampleGenerationResponse> => {
-  return await trainingAPI.generateSample({
+  return await API.generateSample({
     task,
     prompt,
     modelId,
@@ -320,10 +316,10 @@ export const generateAudioSample = async (
 };
 
 export const checkSampleStatus = async (uuid: string): Promise<SampleGenerationResponse> => {
-  return await trainingAPI.getSampleStatus(uuid);
+  return await API.getSampleStatus(uuid);
 };
 
 // Universal status check for spinners
 export const checkStatus = async (uuid: string) => {
-  return await trainingAPI.getStatus(uuid);
+  return await API.getStatus(uuid);
 };

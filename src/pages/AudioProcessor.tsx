@@ -12,7 +12,7 @@ import { AudioPreview } from "@/components/AudioPreview";
 import { ProcessingSpinner } from "@/components/ProcessingSpinner";
 import { RotateCcw } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { generateAudioSample, checkSampleStatus, isTrainingAPIConfigured, setTrainingAPIConfig } from "@/lib/api";
+import { API } from "@/lib/api";
 
 export interface AudioFile {
   file: File;
@@ -78,7 +78,7 @@ const AudioProcessor = () => {
       if (!referenceAudio || !selectedAccent || !prompt.trim()) return;
     }
 
-    if (!isTrainingAPIConfigured()) {
+    if (!API.isConfigured()) {
       toast({
         title: "API not configured",
         description: "Please configure your API settings first.",
@@ -105,19 +105,18 @@ const AudioProcessor = () => {
             generationType: 'reference'
           };
 
-      const response = await generateAudioSample(
-        useCreationMode ? 'voice_creation' : 'accent_generation',
-        `${prompt} (Accent: ${selectedAccent})`,
-        undefined,
-        config
-      );
+      const response = await API.generateSample({
+        task: useCreationMode ? 'voice_creation' : 'accent_generation',
+        prompt: `${prompt} (Accent: ${selectedAccent})`,
+        voiceSettings: config
+      });
       
       setProcessingUuid(response.uuid);
       
       // Poll for status updates
       const pollInterval = setInterval(async () => {
         try {
-          const status = await checkSampleStatus(response.uuid);
+          const status = await API.getSampleStatus(response.uuid);
           
           if (status.status === 'completed' && status.audioUrl) {
             const audioResponse = await fetch(status.audioUrl);

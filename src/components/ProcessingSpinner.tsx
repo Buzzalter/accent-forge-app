@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { checkStatus } from "@/lib/api";
+import { API } from "@/lib/api";
 
 interface ProcessingSpinnerProps {
   uuid?: string | null;
@@ -14,7 +14,7 @@ export const ProcessingSpinner = ({ uuid }: ProcessingSpinnerProps) => {
 
     const pollStatus = async () => {
       try {
-        const status = await checkStatus(uuid);
+        const status = await API.getStatus(uuid);
         setProgress(status.progress);
         
         // Update status text based on progress
