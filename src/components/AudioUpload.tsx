@@ -6,7 +6,7 @@ import { API } from "@/lib/api";
 import { toast } from "@/hooks/use-toast";
 
 interface AudioUploadProps {
-  onUpload: (uuid: string, file: File) => void;
+  onUpload: (file: File) => void;
   isUploading?: boolean;
 }
 
@@ -16,23 +16,7 @@ export const AudioUpload = ({ onUpload, isUploading = false }: AudioUploadProps)
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     if (acceptedFiles.length > 0) {
       const file = acceptedFiles[0];
-      try {
-        const response = await API.uploadAudio(file);
-        if (response.success && response.uuid) {
-          onUpload(response.uuid, file);
-          toast({
-            title: "Audio uploaded successfully",
-            description: "Your audio file is ready for processing."
-          });
-        }
-      } catch (error) {
-        console.error('Upload failed:', error);
-        toast({
-          title: "Upload failed",
-          description: "Please try uploading your audio file again.",
-          variant: "destructive"
-        });
-      }
+      onUpload(file);
     }
   }, [onUpload]);
 

@@ -158,21 +158,37 @@ const AudioTraining = () => {
     }
   };
 
-  const handleAudioUpload = async (audioUuid: string, file: File) => {
-    const audioFile: AudioFile = {
-      file,
-      uuid: crypto.randomUUID(),
-      url: URL.createObjectURL(file),
-      audioUuid // Store the API UUID
-    };
-    setReferenceAudio(audioFile);
-    
-    // Store in localStorage for persistence
-    localStorage.setItem('trainingReferenceAudio', JSON.stringify({
-      name: file.name,
-      audioUuid,
-      url: audioFile.url
-    }));
+  const handleAudioUpload = async (file: File) => {
+    try {
+      const response = await API.uploadAudio(file);
+      
+      const audioFile: AudioFile = {
+        file,
+        uuid: crypto.randomUUID(),
+        url: URL.createObjectURL(file),
+        audioUuid: response.uuid
+      };
+      setReferenceAudio(audioFile);
+      
+      // Store in localStorage for persistence
+      localStorage.setItem('trainingReferenceAudio', JSON.stringify({
+        name: file.name,
+        audioUuid: response.uuid,
+        url: audioFile.url
+      }));
+      
+      toast({
+        title: "Audio uploaded successfully",
+        description: "Your audio file is ready for processing."
+      });
+    } catch (error) {
+      console.error('Audio upload error:', error);
+      toast({
+        title: "Upload failed",
+        description: "Please try uploading your audio file again.",
+        variant: "destructive"
+      });
+    }
   };
 
   // Load reference audio from localStorage on mount
