@@ -1,11 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { AudioUpload } from "@/components/AudioUpload";
 import { AudioPreview } from "@/components/AudioPreview";
@@ -18,6 +17,7 @@ export interface AudioFile {
   file: File;
   uuid: string;
   url: string;
+  audioUuid?: string; // UUID from API upload
 }
 
 const accents = [
@@ -28,173 +28,156 @@ const accents = [
   { value: "irish", label: "Irish" },
 ];
 
+const emotions = [
+  { value: "neutral", label: "Neutral" },
+  { value: "happy", label: "Happy" },
+  { value: "sad", label: "Sad" },
+  { value: "excited", label: "Excited" },
+  { value: "calm", label: "Calm" },
+];
+
 const AudioProcessor = () => {
   const [referenceAudio, setReferenceAudio] = useState<AudioFile | null>(null);
-  const [prompt, setPrompt] = useState("");
-  const [selectedAccent, setSelectedAccent] = useState("");
+  const [promptText, setPromptText] = useState("");
+  const [accent, setAccent] = useState("");
+  const [emotion, setEmotion] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
-  const [outputAudio, setOutputAudio] = useState<AudioFile | null>(null);
-  const [processingUuid, setProcessingUuid] = useState<string | null>(null);
+  const [generatedAudio, setGeneratedAudio] = useState<AudioFile | null>(null);
+  const [jobUuid, setJobUuid] = useState<string | null>(null);
   
   // Creation tab state
   const [voiceGender, setVoiceGender] = useState(false); // false = Masculine, true = Feminine
   const [pitch, setPitch] = useState([3]);
   const [speed, setSpeed] = useState([3]);
 
-  const handleAudioUpload = async (file: File) => {
-    try {
-      // Simulate API call to upload audio and get UUID
-      const formData = new FormData();
-      formData.append("audio", file);
-      
-      // TODO: Replace with actual API call
-      const mockUuid = `audio-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      
-      const audioFile: AudioFile = {
-        file,
-        uuid: mockUuid,
-        url: URL.createObjectURL(file),
-      };
-      
-      setReferenceAudio(audioFile);
-      toast({
-        title: "Audio uploaded successfully",
-        description: "Your reference audio has been processed.",
-      });
-    } catch (error) {
-      toast({
-        title: "Upload failed",
-        description: "There was an error uploading your audio file.",
-        variant: "destructive",
-      });
-    }
-  };
+  // Tab state
+  const [generationType, setGenerationType] = useState("reference");
 
-
-  const handleGenerate = async (useCreationMode = false) => {
-    if (useCreationMode) {
-      if (!selectedAccent || !prompt.trim()) return;
-    } else {
-      if (!referenceAudio || !selectedAccent || !prompt.trim()) return;
-    }
-
-    if (!API.isConfigured()) {
+  // Main generation function for both modes
+  const handleGenerate = async () => {
+    if (!promptText.trim()) {
       toast({
-        title: "API not configured",
-        description: "Please configure your API settings first.",
-        variant: "destructive",
+        title: "Missing prompt",
+        description: "Please enter a text prompt to generate audio.",
+        variant: "destructive"
       });
       return;
     }
 
-    setIsProcessing(true);
-    setOutputAudio(null);
-    setProcessingUuid(null);
-
     try {
-      const config = useCreationMode 
-        ? { 
-            accent: selectedAccent, 
-            gender: voiceGender ? 'feminine' : 'masculine',
-            pitch: pitch[0],
-            speed: speed[0],
-            generationType: 'creation'
-          }
-        : { 
-            accent: selectedAccent,
-            generationType: 'reference'
-          };
+      setIsProcessing(true);
+      setJobUuid(null);
+      setGeneratedAudio(null);
 
-      const response = await API.generateSample({
-        task: useCreationMode ? 'voice_creation' : 'accent_generation',
-        prompt: `${prompt} (Accent: ${selectedAccent})`,
-        voiceSettings: config
-      });
-      
-      setProcessingUuid(response.uuid);
-      
-      // Poll for status updates
-      const pollInterval = setInterval(async () => {
+      const config = {
+        prompt: promptText,
+        audioUuid: referenceAudio?.audioUuid,
+        voiceSettings: {
+          voiceGender: voiceGender ? 'feminine' : 'masculine',
+          accent,
+          speed: speed[0],
+          pitch: pitch[0],
+          emotion
+        }
+      };
+
+      const response = await API.postGenerate(config);
+      setJobUuid(response.uuid);
+
+      // Poll for completion
+      const pollStatus = async () => {
         try {
-          const status = await API.getSampleStatus(response.uuid);
+          const status = await API.getGenerateStatus(response.uuid);
           
           if (status.status === 'completed' && status.audioUrl) {
-            const audioResponse = await fetch(status.audioUrl);
-            const audioBlob = await audioResponse.blob();
-            const audioFile = new File([audioBlob], 'generated-audio.wav', { type: 'audio/wav' });
-            
-            const outputAudioFile: AudioFile = {
-              file: audioFile,
+            setGeneratedAudio({
+              file: new File([], 'generated.mp3'),
               uuid: status.uuid,
-              url: status.audioUrl,
-            };
-            
-            setOutputAudio(outputAudioFile);
+              url: status.audioUrl
+            });
             setIsProcessing(false);
-            clearInterval(pollInterval);
-            
             toast({
-              title: "Audio generated successfully",
-              description: useCreationMode ? "Your audio has been created." : "Your audio has been processed with the selected accent.",
+              title: "Audio generated successfully!",
+              description: "Your AI-generated audio is ready."
             });
           } else if (status.status === 'failed') {
-            setIsProcessing(false);
-            clearInterval(pollInterval);
-            
-            toast({
-              title: "Generation failed",
-              description: "There was an error processing your audio.",
-              variant: "destructive",
-            });
+            throw new Error('Generation failed');
           }
         } catch (error) {
-          console.error('Error checking status:', error);
-        }
-      }, 2000);
-      
-      setTimeout(() => {
-        clearInterval(pollInterval);
-        if (isProcessing) {
           setIsProcessing(false);
+          setJobUuid(null);
           toast({
-            title: "Generation timeout",
-            description: "Audio generation took too long. Please try again.",
-            variant: "destructive",
+            title: "Generation failed",
+            description: "Please try again with different settings.",
+            variant: "destructive"
           });
         }
-      }, 300000);
-      
+      };
+
+      // Start polling
+      const interval = setInterval(async () => {
+        await pollStatus();
+        if (!isProcessing) clearInterval(interval);
+      }, 2000);
     } catch (error) {
-      console.error('Error generating audio:', error);
+      console.error('Generation error:', error);
       setIsProcessing(false);
+      setJobUuid(null);
       toast({
         title: "Generation failed",
-        description: "There was an error processing your audio.",
-        variant: "destructive",
+        description: "Please try again.",
+        variant: "destructive"
       });
     }
   };
 
+  const handleAudioUpload = async (audioUuid: string, file: File) => {
+    const audioFile: AudioFile = {
+      file,
+      uuid: crypto.randomUUID(),
+      url: URL.createObjectURL(file),
+      audioUuid // Store the API UUID
+    };
+    setReferenceAudio(audioFile);
+    
+    // Store in localStorage for persistence
+    localStorage.setItem('referenceAudio', JSON.stringify({
+      name: file.name,
+      audioUuid,
+      url: audioFile.url
+    }));
+  };
+
+  // Load reference audio from localStorage on mount
+  useEffect(() => {
+    const stored = localStorage.getItem('referenceAudio');
+    if (stored) {
+      const data = JSON.parse(stored);
+      // Note: We can't restore the full file, but we can restore the UUID for API calls
+      console.log('Stored reference audio found:', data.name);
+    }
+  }, []);
+
   const handleClear = () => {
     setReferenceAudio(null);
-    setPrompt("");
-    setSelectedAccent("");
-    setOutputAudio(null);
+    setPromptText("");
+    setAccent("");
+    setEmotion("");
+    setGeneratedAudio(null);
     setIsProcessing(false);
-    setProcessingUuid(null);
+    setJobUuid(null);
     setVoiceGender(false);
     setPitch([3]);
     setSpeed([3]);
+    localStorage.removeItem('referenceAudio');
     toast({
       title: "Cleared",
-      description: "All inputs and outputs have been cleared.",
+      description: "All inputs and outputs have been cleared."
     });
   };
 
-  const [activeTab, setActiveTab] = useState("reference");
-  
-  const isGenerateDisabledReference = !referenceAudio || !selectedAccent || !prompt.trim() || isProcessing;
-  const isGenerateDisabledCreation = !selectedAccent || !prompt.trim() || isProcessing;
+  const isGenerateDisabledReference = !referenceAudio || !promptText.trim() || isProcessing;
+  const isGenerateDisabledCreation = !promptText.trim() || isProcessing;
 
   return (
     <div className="bg-background p-6">
@@ -229,7 +212,7 @@ const AudioProcessor = () => {
               <CardTitle className="text-primary">Input</CardTitle>
             </CardHeader>
             <CardContent>
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <Tabs value={generationType} onValueChange={setGenerationType} className="w-full">
                 <TabsList className="grid w-full grid-cols-2">
                   <TabsTrigger value="reference">Reference</TabsTrigger>
                   <TabsTrigger value="creation">Creation</TabsTrigger>
@@ -255,22 +238,39 @@ const AudioProcessor = () => {
                     <Input
                       id="prompt"
                       placeholder="Enter your text prompt..."
-                      value={prompt}
-                      onChange={(e) => setPrompt(e.target.value)}
+                      value={promptText}
+                      onChange={(e) => setPromptText(e.target.value)}
                     />
                   </div>
 
                   {/* Accent Selection */}
                   <div className="space-y-2">
                     <Label>Accent</Label>
-                    <Select value={selectedAccent} onValueChange={setSelectedAccent}>
+                    <Select value={accent} onValueChange={setAccent}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select an accent" />
                       </SelectTrigger>
                       <SelectContent>
-                        {accents.map((accent) => (
-                          <SelectItem key={accent.value} value={accent.value}>
-                            {accent.label}
+                        {accents.map((accentOption) => (
+                          <SelectItem key={accentOption.value} value={accentOption.value}>
+                            {accentOption.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Emotion Selection */}
+                  <div className="space-y-2">
+                    <Label>Emotion</Label>
+                    <Select value={emotion} onValueChange={setEmotion}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select an emotion" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {emotions.map((emotionOption) => (
+                          <SelectItem key={emotionOption.value} value={emotionOption.value}>
+                            {emotionOption.label}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -279,7 +279,7 @@ const AudioProcessor = () => {
 
                   {/* Generate Button */}
                   <Button 
-                    onClick={() => handleGenerate(false)}
+                    onClick={handleGenerate}
                     disabled={isGenerateDisabledReference}
                     className="w-full"
                     size="lg"
@@ -348,22 +348,39 @@ const AudioProcessor = () => {
                     <Input
                       id="prompt-creation"
                       placeholder="Enter your text prompt..."
-                      value={prompt}
-                      onChange={(e) => setPrompt(e.target.value)}
+                      value={promptText}
+                      onChange={(e) => setPromptText(e.target.value)}
                     />
                   </div>
 
                   {/* Accent Selection */}
                   <div className="space-y-2">
                     <Label>Accent</Label>
-                    <Select value={selectedAccent} onValueChange={setSelectedAccent}>
+                    <Select value={accent} onValueChange={setAccent}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select an accent" />
                       </SelectTrigger>
                       <SelectContent>
-                        {accents.map((accent) => (
-                          <SelectItem key={accent.value} value={accent.value}>
-                            {accent.label}
+                        {accents.map((accentOption) => (
+                          <SelectItem key={accentOption.value} value={accentOption.value}>
+                            {accentOption.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Emotion Selection */}
+                  <div className="space-y-2">
+                    <Label>Emotion</Label>
+                    <Select value={emotion} onValueChange={setEmotion}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select an emotion" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {emotions.map((emotionOption) => (
+                          <SelectItem key={emotionOption.value} value={emotionOption.value}>
+                            {emotionOption.label}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -372,7 +389,7 @@ const AudioProcessor = () => {
 
                   {/* Generate Button */}
                   <Button 
-                    onClick={() => handleGenerate(true)}
+                    onClick={handleGenerate}
                     disabled={isGenerateDisabledCreation}
                     className="w-full"
                     size="lg"
@@ -391,9 +408,9 @@ const AudioProcessor = () => {
             </CardHeader>
             <CardContent>
               {isProcessing ? (
-                <ProcessingSpinner uuid={processingUuid} />
-              ) : outputAudio ? (
-                <AudioPreview audioFile={outputAudio} showRemove={false} />
+                <ProcessingSpinner uuid={jobUuid} />
+              ) : generatedAudio ? (
+                <AudioPreview audioFile={generatedAudio} showRemove={false} />
               ) : (
                 <div className="text-center py-12 text-muted-foreground">
                   Generated audio will appear here

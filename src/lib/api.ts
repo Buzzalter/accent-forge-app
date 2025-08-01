@@ -1,325 +1,110 @@
-// Training API service for external API calls
-export interface TrainingJobConfig {
-  task: string; // which system to post the job to
-  referenceAudioFile: File;
-  prompt: string;
-  // Add other config parameters as needed
-}
+const API_BASE_URL = 'http://localhost:8034';
 
-export interface TrainingJobResponse {
-  uuid: string;
-  status: 'queued' | 'training' | 'completed' | 'failed';
-  progress: number;
-  task: string;
-  createdAt: string;
-  // Add other response fields as needed
-}
-
-export interface SampleGenerationConfig {
-  task: string;
-  modelId?: string; // for completed training models
+export interface GenerateConfig {
   prompt: string;
+  audioUuid?: string;
   voiceSettings?: {
+    voiceGender?: string;
+    accent?: string;
     speed?: number;
     pitch?: number;
     emotion?: string;
-    referenceAudioUuid?: string;
-    [key: string]: any; // Allow additional properties
   };
 }
 
-export interface SampleGenerationResponse {
+export interface TrainingJobConfig {
+  audioUuid: string;
+  prompt: string;
+}
+
+export interface JobResponse {
   uuid: string;
   status: 'queued' | 'processing' | 'completed' | 'failed';
   progress: number;
-  task: string;
-  audioUrl?: string; // available when completed
-  createdAt: string;
+  audioUrl?: string;
 }
 
-export interface TrainingJobStatus {
+export interface AudioUploadResponse {
   uuid: string;
-  status: 'queued' | 'training' | 'completed' | 'failed';
-  progress: number;
-  task: string;
-  updatedAt: string;
-  // Add other status fields as needed
+  success: boolean;
 }
-
-const API_BASE_URL = 'http://localhost:8034';
 
 export const API = {
-  // Set API configuration (maintains backward compatibility)
-  setConfig(baseUrl: string = API_BASE_URL, apiKey: string = '') {
-    this.baseUrl = baseUrl;
-    this.apiKey = apiKey;
-  },
-
-  baseUrl: API_BASE_URL,
-  apiKey: '',
-
-  // Start a new training job
-  async startTrainingJob(config: TrainingJobConfig): Promise<TrainingJobResponse> {
+  async uploadAudio(file: File): Promise<AudioUploadResponse> {
     const formData = new FormData();
-    formData.append('task', config.task);
-    formData.append('referenceAudio', config.referenceAudioFile);
-    formData.append('prompt', config.prompt);
+    formData.append('audio', file);
 
-    const response = await fetch(`${this.baseUrl}/training/start`, {
+    const response = await fetch(`${API_BASE_URL}/upload`, {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${this.apiKey}`,
-        // Don't set Content-Type for FormData, let browser set it with boundary
-      },
       body: formData,
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to start training job: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    return {
-      uuid: data.uuid,
-      status: data.status || 'queued',
-      progress: data.progress || 0,
-      task: config.task,
-      createdAt: data.createdAt || new Date().toISOString(),
-      ...data,
-    };
-  },
-
-  // Get status of a specific training job
-  async getTrainingJobStatus(uuid: string): Promise<TrainingJobStatus> {
-    const response = await fetch(`${this.baseUrl}/training/status/${uuid}`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${this.apiKey}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to get training job status: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    return {
-      uuid: data.uuid,
-      status: data.status,
-      progress: data.progress || 0,
-      task: data.task,
-      updatedAt: data.updatedAt || new Date().toISOString(),
-      ...data,
-    };
-  },
-
-  // Get all training jobs
-  async getAllTrainingJobs(): Promise<TrainingJobStatus[]> {
-    const response = await fetch(`${this.baseUrl}/training/jobs`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${this.apiKey}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to get training jobs: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    return data.jobs || [];
-  },
-
-  // Cancel a training job
-  async cancelTrainingJob(uuid: string): Promise<boolean> {
-    const response = await fetch(`${this.baseUrl}/training/cancel/${uuid}`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${this.apiKey}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to cancel training job: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    return data.success || false;
-  },
-
-  // Get training result/output
-  async getTrainingResult(uuid: string): Promise<any> {
-    const response = await fetch(`${this.baseUrl}/training/result/${uuid}`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${this.apiKey}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to get training result: ${response.statusText}`);
+      throw new Error(`Failed to upload audio: ${response.statusText}`);
     }
 
     return await response.json();
   },
 
-  // Generate audio sample
-  async generateSample(config: SampleGenerationConfig): Promise<SampleGenerationResponse> {
-    const response = await fetch(`${this.baseUrl}/samples/generate`, {
+  async postGenerate(config: GenerateConfig): Promise<JobResponse> {
+    const response = await fetch(`${API_BASE_URL}/generate`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${this.apiKey}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        task: config.task,
-        modelId: config.modelId,
-        prompt: config.prompt,
-        voiceSettings: config.voiceSettings || {},
-      }),
+      body: JSON.stringify(config),
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to generate sample: ${response.statusText}`);
+      throw new Error(`Failed to start generation: ${response.statusText}`);
     }
 
-    const data = await response.json();
-    return {
-      uuid: data.uuid,
-      status: data.status || 'queued',
-      progress: data.progress || 0,
-      task: config.task,
-      audioUrl: data.audioUrl,
-      createdAt: data.createdAt || new Date().toISOString(),
-      ...data,
-    };
+    return await response.json();
   },
 
-  // Get sample generation status
-  async getSampleStatus(uuid: string): Promise<SampleGenerationResponse> {
-    const response = await fetch(`${this.baseUrl}/samples/status/${uuid}`, {
+  async postTrainingJob(config: TrainingJobConfig): Promise<JobResponse> {
+    const response = await fetch(`${API_BASE_URL}/training`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(config),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to start training: ${response.statusText}`);
+    }
+
+    return await response.json();
+  },
+
+  async getGenerateStatus(uuid: string): Promise<JobResponse> {
+    const response = await fetch(`${API_BASE_URL}/generate/${uuid}`, {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${this.apiKey}`,
         'Content-Type': 'application/json',
       },
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to get sample status: ${response.statusText}`);
+      throw new Error(`Failed to get generation status: ${response.statusText}`);
     }
 
-    const data = await response.json();
-    return {
-      uuid: data.uuid,
-      status: data.status,
-      progress: data.progress || 0,
-      task: data.task,
-      audioUrl: data.audioUrl,
-      createdAt: data.createdAt || new Date().toISOString(),
-      ...data,
-    };
+    return await response.json();
   },
 
-  // Get general status (for any UUID - training or sample)
-  async getStatus(uuid: string): Promise<{ status: string; progress: number; type: 'training' | 'sample' }> {
-    const response = await fetch(`${this.baseUrl}/status/${uuid}`, {
+  async getTrainingStatus(uuid: string): Promise<JobResponse> {
+    const response = await fetch(`${API_BASE_URL}/training/${uuid}`, {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${this.apiKey}`,
         'Content-Type': 'application/json',
       },
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to get status: ${response.statusText}`);
+      throw new Error(`Failed to get training status: ${response.statusText}`);
     }
 
-    const data = await response.json();
-    return {
-      status: data.status,
-      progress: data.progress || 0,
-      type: data.type || 'sample',
-      ...data,
-    };
-  },
-
-  // Utility method to check if API is configured
-  isConfigured(): boolean {
-    return !!this.baseUrl && !!this.apiKey;
-  },
-
-  // Utility method to validate API connection
-  async testConnection(): Promise<boolean> {
-    try {
-      const response = await fetch(`${this.baseUrl}/health`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
-        },
-      });
-      return response.ok;
-    } catch (error) {
-      console.error('API connection test failed:', error);
-      return false;
-    }
+    return await response.json();
   }
-};
-
-// Export backward compatible utility functions
-export const setTrainingAPIConfig = (baseUrl: string = API_BASE_URL, apiKey: string = '') => {
-  API.setConfig(baseUrl, apiKey);
-};
-
-export const isTrainingAPIConfigured = () => {
-  return API.isConfigured();
-};
-
-// Training job functions
-export const submitTrainingJob = async (
-  task: string,
-  referenceAudioFile: File,
-  prompt: string
-): Promise<TrainingJobResponse> => {
-  return await API.startTrainingJob({
-    task,
-    referenceAudioFile,
-    prompt,
-  });
-};
-
-export const checkJobStatus = async (uuid: string): Promise<TrainingJobStatus> => {
-  return await API.getTrainingJobStatus(uuid);
-};
-
-export const fetchAllJobs = async (): Promise<TrainingJobStatus[]> => {
-  return await API.getAllTrainingJobs();
-};
-
-// Sample generation functions
-export const generateAudioSample = async (
-  task: string,
-  prompt: string,
-  modelId?: string,
-  voiceSettings?: any
-): Promise<SampleGenerationResponse> => {
-  return await API.generateSample({
-    task,
-    prompt,
-    modelId,
-    voiceSettings,
-  });
-};
-
-export const checkSampleStatus = async (uuid: string): Promise<SampleGenerationResponse> => {
-  return await API.getSampleStatus(uuid);
-};
-
-// Universal status check for spinners
-export const checkStatus = async (uuid: string) => {
-  return await API.getStatus(uuid);
 };

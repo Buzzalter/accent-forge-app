@@ -1,12 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-import { AudioUpload } from "@/components/AudioUpload";
 import { TrainingAudioUpload } from "@/components/TrainingAudioUpload";
-import { AudioPreview } from "@/components/AudioPreview";
 import { TrainingAudioPreview } from "@/components/TrainingAudioPreview";
 import { TrainingSpinner } from "@/components/TrainingSpinner";
 import { TrainModelDialog } from "@/components/TrainModelDialog";
@@ -18,176 +16,187 @@ export interface AudioFile {
   file: File;
   uuid: string;
   url: string;
+  audioUuid?: string; // UUID from API upload
 }
 
 const AudioTraining = () => {
   const [referenceAudio, setReferenceAudio] = useState<AudioFile | null>(null);
   const [prompt, setPrompt] = useState("");
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [outputAudio, setOutputAudio] = useState<AudioFile | null>(null);
-  const [trainingJobId, setTrainingJobId] = useState<string | null>(null);
-  const [generationUuid, setGenerationUuid] = useState<string | null>(null);
+  const [isGeneratingPreview, setIsGeneratingPreview] = useState(false);
+  const [generatedPreview, setGeneratedPreview] = useState<AudioFile | null>(null);
+  const [isTraining, setIsTraining] = useState(false);
+  const [previewJobUuid, setPreviewJobUuid] = useState<string | null>(null);
+  const [trainingJobUuid, setTrainingJobUuid] = useState<string | null>(null);
 
-  const handleAudioUpload = async (file: File) => {
-    try {
-      // Simulate API call to upload audio and get UUID
-      const formData = new FormData();
-      formData.append("audio", file);
-      
-      // TODO: Replace with actual API call
-      const mockUuid = `audio-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      
-      const audioFile: AudioFile = {
-        file,
-        uuid: mockUuid,
-        url: URL.createObjectURL(file),
-      };
-      
-      setReferenceAudio(audioFile);
+  const handleGeneratePreview = async () => {
+    if (!prompt.trim()) {
       toast({
-        title: "Audio uploaded successfully",
-        description: "Your reference audio has been processed.",
-      });
-    } catch (error) {
-      toast({
-        title: "Upload failed",
-        description: "There was an error uploading your audio file.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleGenerate = async () => {
-    if (!referenceAudio || !prompt.trim()) return;
-
-    if (!API.isConfigured()) {
-      toast({
-        title: "API not configured",
-        description: "Please configure your API settings first.",
-        variant: "destructive",
+        title: "Missing prompt",
+        description: "Please enter a text prompt to generate preview.",
+        variant: "destructive"
       });
       return;
     }
 
-    setIsGenerating(true);
-    setOutputAudio(null);
-    setGenerationUuid(null);
+    if (!referenceAudio?.audioUuid) {
+      toast({
+        title: "Missing reference audio",
+        description: "Please upload reference audio first.",
+        variant: "destructive"
+      });
+      return;
+    }
 
     try {
-      // Start sample generation for training
-      const response = await API.generateSample({
-        task: 'voice_training_sample',
+      setIsGeneratingPreview(true);
+      setPreviewJobUuid(null);
+      setGeneratedPreview(null);
+
+      const config = {
         prompt: prompt.trim(),
-        voiceSettings: { referenceAudioUuid: referenceAudio.uuid }
-      });
-      
-      setGenerationUuid(response.uuid);
-      
-      // Poll for status updates
-      const pollInterval = setInterval(async () => {
+        audioUuid: referenceAudio.audioUuid
+      };
+
+      const response = await API.postGenerate(config);
+      setPreviewJobUuid(response.uuid);
+
+      // Poll for completion
+      const pollStatus = async () => {
         try {
-          const status = await API.getSampleStatus(response.uuid);
+          const status = await API.getGenerateStatus(response.uuid);
           
           if (status.status === 'completed' && status.audioUrl) {
-            // Create audio file from URL
-            const audioResponse = await fetch(status.audioUrl);
-            const audioBlob = await audioResponse.blob();
-            const audioFile = new File([audioBlob], 'training-sample.wav', { type: 'audio/wav' });
-            
-            const outputAudioFile: AudioFile = {
-              file: audioFile,
+            setGeneratedPreview({
+              file: new File([], 'preview.mp3'),
               uuid: status.uuid,
-              url: status.audioUrl,
-            };
-            
-            setOutputAudio(outputAudioFile);
-            setIsGenerating(false);
-            clearInterval(pollInterval);
-            
+              url: status.audioUrl
+            });
+            setIsGeneratingPreview(false);
             toast({
-              title: "Audio generated successfully",
-              description: "Your training audio sample has been generated.",
+              title: "Preview generated successfully!",
+              description: "Your voice preview is ready."
             });
           } else if (status.status === 'failed') {
-            setIsGenerating(false);
-            clearInterval(pollInterval);
-            
-            toast({
-              title: "Generation failed",
-              description: "There was an error processing your audio.",
-              variant: "destructive",
-            });
+            throw new Error('Preview generation failed');
           }
         } catch (error) {
-          console.error('Error checking status:', error);
-        }
-      }, 2000);
-      
-      // Clean up interval after 5 minutes max
-      setTimeout(() => {
-        clearInterval(pollInterval);
-        if (isGenerating) {
-          setIsGenerating(false);
+          setIsGeneratingPreview(false);
+          setPreviewJobUuid(null);
           toast({
-            title: "Generation timeout",
-            description: "Audio generation took too long. Please try again.",
-            variant: "destructive",
+            title: "Preview generation failed",
+            description: "Please try again.",
+            variant: "destructive"
           });
         }
-      }, 300000);
-      
+      };
+
+      // Start polling
+      const interval = setInterval(async () => {
+        await pollStatus();
+        if (!isGeneratingPreview) clearInterval(interval);
+      }, 2000);
     } catch (error) {
-      console.error('Error generating audio:', error);
-      setIsGenerating(false);
+      console.error('Preview generation error:', error);
+      setIsGeneratingPreview(false);
+      setPreviewJobUuid(null);
       toast({
-        title: "Generation failed",
-        description: "There was an error processing your audio.",
-        variant: "destructive",
+        title: "Preview generation failed",
+        description: "Please try again.",
+        variant: "destructive"
       });
     }
   };
 
-  const handleTrainStart = async (jobId: string) => {
-    if (!referenceAudio || !outputAudio) return;
+  const handleStartTraining = async () => {
+    if (!prompt.trim()) {
+      toast({
+        title: "Missing prompt",
+        description: "Please enter a text prompt for training.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!referenceAudio?.audioUuid) {
+      toast({
+        title: "Missing reference audio",
+        description: "Please upload reference audio first.",
+        variant: "destructive"
+      });
+      return;
+    }
 
     try {
-      // Start actual training job
-      const response = await API.startTrainingJob({
-        task: 'voice_model_training',
-        referenceAudioFile: referenceAudio.file,
+      setIsTraining(true);
+      setTrainingJobUuid(null);
+
+      const config = {
+        audioUuid: referenceAudio.audioUuid,
         prompt: prompt.trim()
-      });
-      
-      setTrainingJobId(response.uuid);
-      
+      };
+
+      const response = await API.postTrainingJob(config);
+      setTrainingJobUuid(response.uuid);
+
       toast({
-        title: "Training job started",
-        description: `Training job ${response.uuid} has been queued.`,
+        title: "Training started!",
+        description: "Your voice model training has begun. This may take several minutes."
       });
     } catch (error) {
-      console.error('Error starting training job:', error);
+      console.error('Training start error:', error);
+      setIsTraining(false);
+      setTrainingJobUuid(null);
       toast({
         title: "Training failed to start",
-        description: "There was an error starting the training job.",
-        variant: "destructive",
+        description: "Please try again.",
+        variant: "destructive"
       });
     }
   };
+
+  const handleAudioUpload = async (audioUuid: string, file: File) => {
+    const audioFile: AudioFile = {
+      file,
+      uuid: crypto.randomUUID(),
+      url: URL.createObjectURL(file),
+      audioUuid // Store the API UUID
+    };
+    setReferenceAudio(audioFile);
+    
+    // Store in localStorage for persistence
+    localStorage.setItem('trainingReferenceAudio', JSON.stringify({
+      name: file.name,
+      audioUuid,
+      url: audioFile.url
+    }));
+  };
+
+  // Load reference audio from localStorage on mount
+  useEffect(() => {
+    const stored = localStorage.getItem('trainingReferenceAudio');
+    if (stored) {
+      const data = JSON.parse(stored);
+      // Note: We can't restore the full file, but we can restore the UUID for API calls
+      console.log('Stored reference audio found:', data.name);
+    }
+  }, []);
 
   const handleClear = () => {
     setReferenceAudio(null);
     setPrompt("");
-    setOutputAudio(null);
-    setIsGenerating(false);
-    setTrainingJobId(null);
-    setGenerationUuid(null);
+    setGeneratedPreview(null);
+    setIsGeneratingPreview(false);
+    setIsTraining(false);
+    setPreviewJobUuid(null);
+    setTrainingJobUuid(null);
+    localStorage.removeItem('trainingReferenceAudio');
     toast({
       title: "Cleared",
-      description: "All inputs and outputs have been cleared.",
+      description: "All inputs and outputs have been cleared."
     });
   };
 
-  const isGenerateDisabled = !referenceAudio || !prompt.trim() || isGenerating;
+  const isGenerateDisabled = !referenceAudio || !prompt.trim() || isGeneratingPreview;
 
   return (
     <div className="bg-gradient-to-br from-training-primary/5 via-background to-training-accent/5 min-h-screen p-6">
@@ -247,14 +256,14 @@ const AudioTraining = () => {
                 />
               </div>
 
-              {/* Generate Button */}
+              {/* Generate Preview Button */}
               <Button 
-                onClick={handleGenerate}
+                onClick={handleGeneratePreview}
                 disabled={isGenerateDisabled}
                 className="w-full bg-training-primary hover:bg-training-primary/90 text-training-primary-foreground"
                 size="lg"
               >
-                Generate Sample
+                Generate Preview
               </Button>
             </CardContent>
           </Card>
@@ -265,16 +274,21 @@ const AudioTraining = () => {
               <CardTitle className="text-training-primary">Output</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {isGenerating ? (
-                <TrainingSpinner uuid={generationUuid} />
-              ) : outputAudio ? (
+              {isGeneratingPreview ? (
+                <TrainingSpinner uuid={previewJobUuid} />
+              ) : generatedPreview ? (
                 <>
-                  <TrainingAudioPreview audioFile={outputAudio} showRemove={false} />
-                  <TrainModelDialog onTrainStart={handleTrainStart} />
+                  <TrainingAudioPreview audioFile={generatedPreview} showRemove={false} />
+                  <TrainModelDialog onTrainStart={handleStartTraining} />
+                  {isTraining && trainingJobUuid && (
+                    <div className="mt-4">
+                      <TrainingSpinner uuid={trainingJobUuid} />
+                    </div>
+                  )}
                 </>
               ) : (
                 <div className="text-center py-12 text-muted-foreground">
-                  Generated training sample will appear here
+                  Generated training preview will appear here
                 </div>
               )}
             </CardContent>

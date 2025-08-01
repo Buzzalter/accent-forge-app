@@ -14,7 +14,7 @@ export const ProcessingSpinner = ({ uuid }: ProcessingSpinnerProps) => {
 
     const pollStatus = async () => {
       try {
-        const status = await API.getStatus(uuid);
+        const status = await API.getGenerateStatus(uuid);
         setProgress(status.progress);
         
         // Update status text based on progress
