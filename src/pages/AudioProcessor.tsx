@@ -28,19 +28,12 @@ const accents = [
   { value: "irish", label: "Irish" },
 ];
 
-const emotions = [
-  { value: "neutral", label: "Neutral" },
-  { value: "happy", label: "Happy" },
-  { value: "sad", label: "Sad" },
-  { value: "excited", label: "Excited" },
-  { value: "calm", label: "Calm" },
-];
 
 const AudioProcessor = () => {
   const [referenceAudio, setReferenceAudio] = useState<AudioFile | null>(null);
   const [promptText, setPromptText] = useState("");
   const [accent, setAccent] = useState("");
-  const [emotion, setEmotion] = useState("");
+  
   const [isProcessing, setIsProcessing] = useState(false);
   const [generatedAudio, setGeneratedAudio] = useState<AudioFile | null>(null);
   const [jobUuid, setJobUuid] = useState<string | null>(null);
@@ -160,7 +153,6 @@ const AudioProcessor = () => {
     setReferenceAudio(null);
     setPromptText("");
     setAccent("");
-    setEmotion("");
     setGeneratedAudio(null);
     setIsProcessing(false);
     setJobUuid(null);
@@ -258,22 +250,6 @@ const AudioProcessor = () => {
                     </Select>
                   </div>
 
-                  {/* Emotion Selection */}
-                  <div className="space-y-2">
-                    <Label>Emotion</Label>
-                    <Select value={emotion} onValueChange={setEmotion}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select an emotion" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {emotions.map((emotionOption) => (
-                          <SelectItem key={emotionOption.value} value={emotionOption.value}>
-                            {emotionOption.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
 
                   {/* Generate Button */}
                   <Button 
@@ -368,22 +344,6 @@ const AudioProcessor = () => {
                     </Select>
                   </div>
 
-                  {/* Emotion Selection */}
-                  <div className="space-y-2">
-                    <Label>Emotion</Label>
-                    <Select value={emotion} onValueChange={setEmotion}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select an emotion" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {emotions.map((emotionOption) => (
-                          <SelectItem key={emotionOption.value} value={emotionOption.value}>
-                            {emotionOption.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
 
                   {/* Generate Button */}
                   <Button 
